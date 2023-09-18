@@ -1,0 +1,74 @@
+
+CHECKLIST:
+    CODE:
+        [X] textured quad renderer
+        [X] simple physics
+        [ ] animation system
+        [ ] sfx and music system
+        [ ] particle system
+        [ ] UI system
+        [ ] player controller
+        [ ] boss controller
+        [ ] boss AI
+        [ ] pause menu
+        [ ] main menu
+
+    ART:
+        [ ] SFX
+            [ ] music
+            [ ] main menu music
+            [ ] player hit sound
+            [ ] player walk sound
+            [ ] player death sound
+            [ ] boss hit sound
+            [ ] boss walk sound
+            [ ] boss death sound
+
+        [ ] UI
+            [ ] main menu
+            [ ] pause menu
+
+        [ ] demo level background
+            [ ] base design
+            [ ] walk
+            [ ] attack
+            [ ] death
+
+        [ ] player
+            [ ] base design
+            [ ] idle
+            [ ] walk
+            [ ] attack
+            [ ] dash
+            [ ] hurt
+            [ ] death
+
+
+
+
+
+9/17/23:
+    day one. Set up project structure, copied over build scripts, main function, libraries, and base files.
+    Started from scratch with graphics system, decided to put raw openGL in the main function because abstractions were a lot of work
+    and don't actually help that much. (Only going with one backend.) Used the matrix and vector library i made for other projects.
+    Copied over a simple AABB AABB intersection function for physics.  Decided that making a simulation was a lot of work and physics
+    for the player was going to be hard coded. Added hardcoded physics for the player. Added jump buffering (because of the interesting
+    choice to have inputs per frame and not per tick) (it doesn't work if you try to read inputs per tick and they are updated per
+    frame.)
+
+    Some other things:
+    basic entity structure:
+        flags to enable different engine systems (collision, rendering, animation, etc.)
+        function pointers per entity for update and collsion reaction logic.
+        per type (player, boss) data is going to be a unionized part of the entity struct
+
+    Libraries I am using:
+        GLFW for windowing and OS abstraction
+        GLAD for loading openGL functions
+        stbImage for image loading
+        stbTrueType for font loading and rasterization
+        blu (i made this one) for UI // credit here for many design decisions: https://www.rfleury.com/p/ui-series-table-of-contents
+        base (i made this one) for memory arenas and convinence features
+
+    Build system:
+        project is built using simple batchfiles and gcc to compile and link
