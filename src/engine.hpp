@@ -64,6 +64,8 @@ typedef struct Entity Entity;
 typedef void (*EntityUpdateFunc)(Entity* e);
 typedef void (*p_CollideFunc)(p_Manifold m, Entity* e, Entity* other);
 struct Entity {
+    V2f textureStart = { 0, 0 };
+    V2f textureEnd = { 1, 1 };
     Texture* texture = nullptr;
     V2f position = V2f();
     V2f velocity = V2f();

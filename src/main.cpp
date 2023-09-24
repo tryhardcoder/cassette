@@ -29,8 +29,8 @@ Texture* makeTexture(const char* path, BumpAlloc* arena) {
     glBindTexture(GL_TEXTURE_2D, t->id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // NOTE: for pixely looks again, use -> GL_NEAREST as the mag/min filter
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -91,7 +91,8 @@ int main() {
     // loading player
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/player.png", &globs.levelArena);
+        e->texture = makeTexture("res/textures/spritesheet.png", &globs.levelArena);
+        // e->scale = { 0.5, 0.5 };
         e->scale = { 0.5, 0.5 };
         e->flags |= entityFlag_render;
 
@@ -109,13 +110,28 @@ int main() {
 
     // ground
     {
+        float width = 40;
+        Entity* e = registerEntity();
+        e->texture = makeTexture("res/textures/ground.png", &globs.levelArena);
+        e->flags |= entityFlag_render;
+        e->position = V2f(0, -2);
+        e->scale = { width/2, 1 };
+
+        e->colliderHalfSize = { width/2, 0.7 };
+        float aspect = e->texture->width / (float)e->texture->height;
+        e->textureEnd = { (e->scale.x / aspect), 1 };
+        e->layer = 1;
+        e->mask = 1;
+        e->flags |= entityFlag_collision;
+    }
+    {
         Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/brick.png", &globs.levelArena);
         e->flags |= entityFlag_render;
-        e->position = V2f(0, -2);
-        e->scale = { 10, 1 };
+        e->position = V2f(-3, 0);
+        e->scale = { 1, 10 };
 
-        e->colliderHalfSize = { 10, 1 };
+        e->colliderHalfSize = { 1, 10 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
@@ -311,8 +327,8 @@ int main() {
             if(e->flags & entityFlag_render) {
                 UniBlock* b = ARR_APPEND(globs.renderCallStart, globs.renderCallCount, UniBlock());
                 b->textureId = e->texture->id;
-                b->srcStart = V2f();
-                b->srcEnd = V2f(1, 1);
+                b->srcStart = e->textureStart;
+                b->srcEnd = e->textureEnd;
                 b->model = matrixTransform(
                     e->position.x, e->position.y,
                     e->zIndex,
