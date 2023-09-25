@@ -37,6 +37,66 @@ Texture* makeTexture(const char* path, BumpAlloc* arena) {
     return t;
 }
 
+// asserts of failure
+U32 registerShader(const char* vPath, const char* fPath) {
+    U32 shaderId = 0;
+    int err = 0;
+
+    U64 vertSize;
+    U8* vertSrc = loadFileToBuffer(vPath, true, &vertSize, &globs.frameArena);
+    assert(vertSrc);
+
+    U64 fragSize;
+    U8* fragSrc = loadFileToBuffer(fPath, true, &fragSize, &globs.frameArena);
+    assert(fragSrc);
+
+    //compile src into shader code
+    U32 v = glCreateShader(GL_VERTEX_SHADER);
+    int smallVertSize = (int)vertSize;
+    glShaderSource(v, 1, (const char* const*)&vertSrc, &smallVertSize);
+    glCompileShader(v);
+
+    U32 f = glCreateShader(GL_FRAGMENT_SHADER);
+    int smallFragSize = (int)fragSize; // CLEANUP: these could overflow
+    glShaderSource(f, 1, (const char* const*)&fragSrc, &smallFragSize);
+    glCompileShader(f);
+
+    bool compFailed = false;
+    char* logBuffer = BUMP_PUSH_ARR(&globs.frameArena, 512, char);
+
+    glGetShaderiv(v, GL_COMPILE_STATUS, &err);
+    if(!err) {
+        glGetShaderInfoLog(v, 512, NULL, logBuffer);
+        printf("Compiling shader \"%s\" failied: %s", "2d.vert", logBuffer);
+        compFailed = true;
+    };
+
+    glGetShaderiv(f, GL_COMPILE_STATUS, &err);
+    if(!err) {
+        glGetShaderInfoLog(f, 512, NULL, logBuffer);
+        printf("Compiling shader \"%s\" failied: %s", "2f.frag", logBuffer);
+        compFailed = true;
+    };
+
+
+    if(!compFailed) {
+        shaderId = glCreateProgram();
+        glAttachShader(shaderId, v);
+        glAttachShader(shaderId, f);
+
+        glLinkProgram(shaderId);
+        glValidateProgram(shaderId);
+    }
+    else {
+        assert(false);
+    }
+
+    glDeleteShader(v);
+    glDeleteShader(f);
+
+    return shaderId;
+}
+
 Entity* registerEntity() {
     Entity* e = BUMP_PUSH_NEW(&globs.levelArena, Entity);
     SLL_PUSH_FRONT(e, globs.firstEntity);
@@ -75,18 +135,20 @@ int main() {
         glDepthFunc(GL_LESS);
         glDepthFunc(GL_LESS | GL_EQUAL);
 
+        glLineWidth(3);
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glEnable(GL_MULTISAMPLE);
+        glEnable(GL_MULTISAMPLE);
 
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(
-    [](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam) {
-        if(type == GL_DEBUG_TYPE_OTHER) { return; } // hides messages talking about buffer memory source which were getting spammed
-        printf("[GL] %i, %s\n", type, message);
-    }, 0);
-}
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback(
+        [](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam) {
+            if(type == GL_DEBUG_TYPE_OTHER) { return; } // hides messages talking about buffer memory source which were getting spammed
+            printf("[GL] %i, %s\n", type, message);
+        }, 0);
+    }
 
     // loading player
     {
@@ -167,62 +229,8 @@ int main() {
         glBindVertexArray(0);
     }
 
-    U32 shaderId = 0;
-    {
-        int err = 0;
-
-        U64 vertSize;
-        U8* vertSrc = loadFileToBuffer("res/shaders/2d.vert", true, &vertSize, &globs.frameArena);
-        assert(vertSrc);
-
-        U64 fragSize;
-        U8* fragSrc = loadFileToBuffer("res/shaders/2d.frag", true, &fragSize, &globs.frameArena);
-        assert(fragSrc);
-
-        //compile src into shader code
-        U32 v = glCreateShader(GL_VERTEX_SHADER);
-        int smallVertSize = (int)vertSize;
-        glShaderSource(v, 1, (const char* const*)&vertSrc, &smallVertSize);
-        glCompileShader(v);
-
-        U32 f = glCreateShader(GL_FRAGMENT_SHADER);
-        int smallFragSize = (int)fragSize; // CLEANUP: these could overflow
-        glShaderSource(f, 1, (const char* const*)&fragSrc, &smallFragSize);
-        glCompileShader(f);
-
-        bool compFailed = false;
-        char* logBuffer = BUMP_PUSH_ARR(&globs.frameArena, 512, char);
-
-        glGetShaderiv(v, GL_COMPILE_STATUS, &err);
-        if(!err) {
-            glGetShaderInfoLog(v, 512, NULL, logBuffer);
-            printf("Compiling shader \"%s\" failied: %s", "2d.vert", logBuffer);
-            compFailed = true;
-        };
-
-        glGetShaderiv(f, GL_COMPILE_STATUS, &err);
-        if(!err) {
-            glGetShaderInfoLog(f, 512, NULL, logBuffer);
-            printf("Compiling shader \"%s\" failied: %s", "2f.frag", logBuffer);
-            compFailed = true;
-        };
-
-
-        if(!compFailed) {
-            shaderId = glCreateProgram();
-            glAttachShader(shaderId, v);
-            glAttachShader(shaderId, f);
-
-            glLinkProgram(shaderId);
-            glValidateProgram(shaderId);
-        }
-        else {
-            assert(false);
-        }
-
-        glDeleteShader(v);
-        glDeleteShader(f);
-    }
+    U32 sceneShader = registerShader("res/shaders/2d.vert", "res/shaders/2d.frag");
+    U32 solidShader = registerShader("res/shaders/solid.vert", "res/shaders/solid.frag");
 
 
     F64 acc = 0;
@@ -342,12 +350,10 @@ int main() {
         {
             Mat4f view = Mat4f(1.0f);
             Mat4f temp = Mat4f(1.0f);
-            matrixTranslation(0, 7.5, -10, view);
+            matrixTranslation(0, 7.5, 10, view);
             matrixInverse(view, view);
             Mat4f proj;
             matrixPerspective(90, (float)w/(float)h, 0.0001, 10000, proj);
-            matrixScale(1, 1, -1, temp);
-            proj = temp * proj;
             Mat4f vp = view * proj;
 
             glViewport(0, 0, w, h);
@@ -355,26 +361,50 @@ int main() {
             glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glUseProgram(shaderId);
-            glBindVertexArray(va);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-            int loc = glGetUniformLocation(shaderId, "uVP");
-            glUniformMatrix4fv(loc, 1, false, &vp[0]);
+            // scene objects
+            {
+                glUseProgram(sceneShader);
+                glBindVertexArray(va);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+                int loc = glGetUniformLocation(sceneShader, "uVP");
+                glUniformMatrix4fv(loc, 1, false, &vp[0]);
 
-            for(int i = 0; i < globs.renderCallCount; i++) {
-                UniBlock* b = &globs.renderCallStart[i];
-                loc = glGetUniformLocation(shaderId, "uTexture");
-                glUniform1i(loc, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, b->textureId);
-                loc = glGetUniformLocation(shaderId, "uModel");
-                glUniformMatrix4fv(loc, 1, false, &b->model[0]);
-                loc = glGetUniformLocation(shaderId, "uSrcStart");
-                glUniform2f(loc, b->srcStart.x, b->srcStart.y);
-                loc = glGetUniformLocation(shaderId, "uSrcEnd");
-                glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
+                for(int i = 0; i < globs.renderCallCount; i++) {
+                    UniBlock* b = &globs.renderCallStart[i];
+                    loc = glGetUniformLocation(sceneShader, "uTexture");
+                    glUniform1i(loc, 0);
+                    glActiveTexture(GL_TEXTURE0 + 0);
+                    glBindTexture(GL_TEXTURE_2D, b->textureId);
+                    loc = glGetUniformLocation(sceneShader, "uModel");
+                    glUniformMatrix4fv(loc, 1, false, &b->model[0]);
+                    loc = glGetUniformLocation(sceneShader, "uSrcStart");
+                    glUniform2f(loc, b->srcStart.x, b->srcStart.y);
+                    loc = glGetUniformLocation(sceneShader, "uSrcEnd");
+                    glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
 
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                }
+            }
+
+
+            // debug collider shapes
+            {
+                glUseProgram(solidShader);
+                glBindVertexArray(va);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+
+                int loc = glGetUniformLocation(solidShader, "uVP");
+                glUniformMatrix4fv(loc, 1, false, &vp[0]);
+
+                for(int i = 0; i < 1; i++) {
+                    Mat4f mat = Mat4f(1.0);
+                    loc = glGetUniformLocation(solidShader, "uColor");
+                    glUniform4f(loc, 0.5, 0.5, 0.5, 1.0);
+
+                    loc = glGetUniformLocation(solidShader, "uModel");
+                    glUniformMatrix4fv(loc, 1, false, &mat[0]);
+                    glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, nullptr);
+                }
             }
         }
 
