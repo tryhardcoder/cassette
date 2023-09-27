@@ -399,7 +399,7 @@ int main() {
                 for(int i = 0; i < 1; i++) {
                     Mat4f mat = Mat4f(1.0);
                     loc = glGetUniformLocation(solidShader, "uColor");
-                    glUniform4f(loc, 0.5, 0.5, 0.5, 1.0);
+                    glUniform4f(loc, 0, 1, 0, 1.0);
 
                     loc = glGetUniformLocation(solidShader, "uModel");
                     glUniformMatrix4fv(loc, 1, false, &mat[0]);
