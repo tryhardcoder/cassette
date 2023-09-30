@@ -3,7 +3,7 @@
 #include "engine.hpp"
 #include <stdio.h>
 
-V2f gravity = { 0, -20 };
+V2f gravity = { 0, -30 };
 float maxVelocity = 8;
 float velocitySnap = 0.15; // percent of target vel to set to every frame
 

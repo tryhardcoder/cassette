@@ -153,8 +153,8 @@ int main() {
     // loading player
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/spritesheet.png", &globs.levelArena);
-        e->scale = { 0.5, 0.5 };
+        e->texture = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
+        e->scale = { 1, 1 };
         e->flags |= entityFlag_render;
 
         e->tickFunc = s_playerTick;
@@ -163,10 +163,25 @@ int main() {
         e->flags |= entityFlag_frameFunc;
 
         e->collideFunc = s_playerCollide;
-        e->colliderHalfSize = { 0.5, 0.5 };
+        e->colliderHalfSize = {0.5, 0.85 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
+    }
+
+    // dummy
+    {
+        Entity* e = registerEntity();
+        e->texture = makeTexture("res/textures/dummy.png", &globs.levelArena);
+        e->scale = {1, 1};
+        e->flags |= entityFlag_render;
+
+        e->mask = (1<<1);
+        e->layer = (1<<1);
+        e->flags |= entityFlag_collision;
+        e->colliderHalfSize = { 1, 1 };
+
+        e->position.x = 4;
     }
 
     // ground
@@ -178,7 +193,7 @@ int main() {
         e->position = V2f(0, -2);
         e->scale = { width/2, 1 };
 
-        e->colliderHalfSize = { width/2, 0.7 };
+        e->colliderHalfSize = { width/2, 1 };
         float aspect = e->texture->width / (float)e->texture->height;
         e->textureEnd = { (e->scale.x / aspect), 1 };
         e->layer = 1;
@@ -189,7 +204,7 @@ int main() {
         Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/brick.png", &globs.levelArena);
         e->flags |= entityFlag_render;
-        e->position = V2f(-3, 0);
+        e->position = V2f(-6, 0);
         e->scale = { 1, 10 };
 
         e->colliderHalfSize = { 1, 10 };
@@ -295,7 +310,9 @@ int main() {
                     Entity* a = physicsList[i];
                     for(int j = i+1; j < physicsCount; j++) {
                         Entity* b = physicsList[j];
-                        ARR_APPEND(pairs, pairCount, (Pair{a, b}));
+                        if(a->mask & b->layer || b->mask & a->layer) {
+                            ARR_APPEND(pairs, pairCount, (Pair{a, b}));
+                        }
                     }
                 }
 
@@ -350,13 +367,12 @@ int main() {
             }
             if(e->flags & entityFlag_collision) {
                 UniBlock* b = BUMP_PUSH_NEW(&debugCallArena, UniBlock);
-                b->color = V4f(0, 1, 0, 0);
+                b->color = V4f(0, 1, 0, 1);
                 b->model = matrixTransform(
                     e->position.x, e->position.y,
-                    0,
+                    0.1,
                     0,
                     e->colliderHalfSize.x, e->colliderHalfSize.y);
-
             }
             e = e->next;
         }
@@ -416,7 +432,6 @@ int main() {
                 for(int i = 0; i < len; i++) {
                     UniBlock* b = &((UniBlock*)debugCallArena.start)[i];
 
-                    Mat4f mat = Mat4f(1.0);
                     loc = glGetUniformLocation(solidShader, "uColor");
                     glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
 
