@@ -10,6 +10,7 @@ typedef struct {
     V2f srcStart = V2f();
     V2f srcEnd = V2f(1, 1);
     Mat4f model = Mat4f(1.0);
+    V4f color = { 0, 0, 0, 1 };
 } UniBlock;
 
 typedef struct {
@@ -103,9 +104,6 @@ struct Globs {
     Entity* firstEntity = nullptr;
     U32 entityCount = 0;
 
-    UniBlock* renderCallStart;
-    U32 renderCallCount = 0;
-
     Input inputs[2] = {
         { 0, 0, GLFW_KEY_D, GLFW_KEY_A },
         { 0, 0, GLFW_KEY_SPACE, 0 },
@@ -118,7 +116,6 @@ struct Globs {
 void initGlobs() {
     bump_allocate(&globs.levelArena, 10000000);
     bump_allocate(&globs.frameArena, 10000000);
-    globs.renderCallStart = (UniBlock*)malloc(100 * sizeof(UniBlock));
 }
 
 

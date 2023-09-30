@@ -135,7 +135,7 @@ int main() {
         glDepthFunc(GL_LESS);
         glDepthFunc(GL_LESS | GL_EQUAL);
 
-        glLineWidth(3);
+        // glLineWidth(3);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -154,7 +154,6 @@ int main() {
     {
         Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/spritesheet.png", &globs.levelArena);
-        // e->scale = { 0.5, 0.5 };
         e->scale = { 0.5, 0.5 };
         e->flags |= entityFlag_render;
 
@@ -231,6 +230,11 @@ int main() {
 
     U32 sceneShader = registerShader("res/shaders/2d.vert", "res/shaders/2d.frag");
     U32 solidShader = registerShader("res/shaders/solid.vert", "res/shaders/solid.frag");
+
+    BumpAlloc renderCallArena;
+    bump_allocate(&renderCallArena, sizeof(UniBlock) * 256);
+    BumpAlloc debugCallArena;
+    bump_allocate(&debugCallArena, sizeof(UniBlock) * 256);
 
 
     F64 acc = 0;
@@ -325,7 +329,8 @@ int main() {
         } // end section
 
         // FRAME UPDATES AND CALL CREATION
-        globs.renderCallCount = 0;
+        bump_clear(&renderCallArena);
+        bump_clear(&debugCallArena);
 
         Entity* e = globs.firstEntity;
         while(e) {
@@ -333,7 +338,7 @@ int main() {
                 e->frameFunc(e);
             }
             if(e->flags & entityFlag_render) {
-                UniBlock* b = ARR_APPEND(globs.renderCallStart, globs.renderCallCount, UniBlock());
+                UniBlock* b = BUMP_PUSH_NEW(&renderCallArena, UniBlock);
                 b->textureId = e->texture->id;
                 b->srcStart = e->textureStart;
                 b->srcEnd = e->textureEnd;
@@ -342,6 +347,16 @@ int main() {
                     e->zIndex,
                     0,
                     e->scale.x, e->scale.y);
+            }
+            if(e->flags & entityFlag_collision) {
+                UniBlock* b = BUMP_PUSH_NEW(&debugCallArena, UniBlock);
+                b->color = V4f(0, 1, 0, 0);
+                b->model = matrixTransform(
+                    e->position.x, e->position.y,
+                    0,
+                    0,
+                    e->colliderHalfSize.x, e->colliderHalfSize.y);
+
             }
             e = e->next;
         }
@@ -369,8 +384,9 @@ int main() {
                 int loc = glGetUniformLocation(sceneShader, "uVP");
                 glUniformMatrix4fv(loc, 1, false, &vp[0]);
 
-                for(int i = 0; i < globs.renderCallCount; i++) {
-                    UniBlock* b = &globs.renderCallStart[i];
+                int len = (UniBlock*)renderCallArena.end - (UniBlock*)renderCallArena.start;
+                for(int i = 0; i < len; i++) {
+                    UniBlock* b = &((UniBlock*)renderCallArena.start)[i];
                     loc = glGetUniformLocation(sceneShader, "uTexture");
                     glUniform1i(loc, 0);
                     glActiveTexture(GL_TEXTURE0 + 0);
@@ -396,13 +412,16 @@ int main() {
                 int loc = glGetUniformLocation(solidShader, "uVP");
                 glUniformMatrix4fv(loc, 1, false, &vp[0]);
 
-                for(int i = 0; i < 1; i++) {
+                int len = (UniBlock*)debugCallArena.end - (UniBlock*)debugCallArena.start;
+                for(int i = 0; i < len; i++) {
+                    UniBlock* b = &((UniBlock*)debugCallArena.start)[i];
+
                     Mat4f mat = Mat4f(1.0);
                     loc = glGetUniformLocation(solidShader, "uColor");
-                    glUniform4f(loc, 0, 1, 0, 1.0);
+                    glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
 
                     loc = glGetUniformLocation(solidShader, "uModel");
-                    glUniformMatrix4fv(loc, 1, false, &mat[0]);
+                    glUniformMatrix4fv(loc, 1, false, &b->model[0]);
                     glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, nullptr);
                 }
             }
