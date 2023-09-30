@@ -265,9 +265,18 @@ int main() {
     bump_allocate(&debugCallArena, sizeof(UniBlock) * 256);
 
 
+    bool debugDrawEnabled = true;
+
     F64 acc = 0;
     F64 prevTime = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+
+        {
+            Input* inp = &globs.inputs[INPUT_DEBUG_DRAW_TOGGLE];
+            if(inp->val && !inp->prev){
+                debugDrawEnabled = !debugDrawEnabled;
+            }
+        }
 
         globs.time = glfwGetTime();
         globs.dt = globs.time - prevTime;
@@ -378,14 +387,16 @@ int main() {
                     0,
                     e->scale.x, e->scale.y);
             }
-            if(e->flags & entityFlag_collision) {
-                UniBlock* b = BUMP_PUSH_NEW(&debugCallArena, UniBlock);
-                b->color = V4f(0, 1, 0, 1);
-                b->model = matrixTransform(
-                    e->position.x, e->position.y,
-                    0.00001,
-                    0,
-                    e->colliderHalfSize.x, e->colliderHalfSize.y);
+            if(debugDrawEnabled) {
+                if(e->flags & entityFlag_collision) {
+                    UniBlock* b = BUMP_PUSH_NEW(&debugCallArena, UniBlock);
+                    b->color = V4f(0, 1, 0, 1);
+                    b->model = matrixTransform(
+                        e->position.x, e->position.y,
+                        0.00001,
+                        0,
+                        e->colliderHalfSize.x, e->colliderHalfSize.y);
+                }
             }
             e = e->next;
         }
