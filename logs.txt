@@ -79,3 +79,6 @@ CHECKLIST:
     Learned about weight painting and how to modify topology to accomodate joints. Did some basic shader stuff also. Techniques for clothing modeling also
 
     https://www.youtube.com/watch?v=BzTN2yTgTj0&t=568s&ab_channel=lacruzo
+
+9/30
+    Made a really simple background scene

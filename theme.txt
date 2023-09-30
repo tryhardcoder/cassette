@@ -1,0 +1,11 @@
+
+Themes:
+    alley fight
+    spaceship
+    hunting
+
+Bosses:
+ giant robot
+ person
+ bear
+ dragon

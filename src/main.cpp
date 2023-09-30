@@ -150,6 +150,10 @@ int main() {
         }, 0);
     }
 
+    float cameraHeight = 10;
+    V2f cameraPos = { 0, 3.9 };
+    float cameraZ = 10;
+
     // loading player
     {
         Entity* e = registerEntity();
@@ -163,14 +167,24 @@ int main() {
         e->flags |= entityFlag_frameFunc;
 
         e->collideFunc = s_playerCollide;
-        e->colliderHalfSize = {0.5, 0.85 };
+        e->colliderHalfSize = { 0.5, 0.85 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
     }
 
-    // dummy
     {
+        Entity* e = registerEntity();
+        e->texture = makeTexture("res/textures/background.png", &globs.levelArena);
+        float asp = (float)e->texture->width / (float)e->texture->height;
+        e->scale = { cameraHeight*asp/2, cameraHeight/2 };
+        e->flags |= entityFlag_render;
+        e->zIndex = -1;
+        e->position = cameraPos;
+    }
+
+    // dummy
+   {
         Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/dummy.png", &globs.levelArena);
         e->scale = {1, 1};
@@ -179,7 +193,7 @@ int main() {
         e->mask = (1<<1);
         e->layer = (1<<1);
         e->flags |= entityFlag_collision;
-        e->colliderHalfSize = { 1, 1 };
+        e->colliderHalfSize = { 0.3, 1 };
 
         e->position.x = 4;
     }
@@ -188,14 +202,13 @@ int main() {
     {
         float width = 40;
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/ground.png", &globs.levelArena);
-        e->flags |= entityFlag_render;
         e->position = V2f(0, -2);
-        e->scale = { width/2, 1 };
 
         e->colliderHalfSize = { width/2, 1 };
+        /*
         float aspect = e->texture->width / (float)e->texture->height;
         e->textureEnd = { (e->scale.x / aspect), 1 };
+        */
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
@@ -204,10 +217,10 @@ int main() {
         Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/brick.png", &globs.levelArena);
         e->flags |= entityFlag_render;
-        e->position = V2f(-6, 0);
-        e->scale = { 1, 10 };
+        e->position = V2f(-10, 0);
+        e->scale = { 1, 6 };
 
-        e->colliderHalfSize = { 1, 10 };
+        e->colliderHalfSize = { 1, 6 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
@@ -370,7 +383,7 @@ int main() {
                 b->color = V4f(0, 1, 0, 1);
                 b->model = matrixTransform(
                     e->position.x, e->position.y,
-                    0.1,
+                    0.00001,
                     0,
                     e->colliderHalfSize.x, e->colliderHalfSize.y);
             }
@@ -381,10 +394,12 @@ int main() {
         {
             Mat4f view = Mat4f(1.0f);
             Mat4f temp = Mat4f(1.0f);
-            matrixTranslation(0, 7.5, 10, view);
+            matrixTranslation(cameraPos.x, cameraPos.y, cameraZ, view);
             matrixInverse(view, view);
             Mat4f proj;
-            matrixPerspective(90, (float)w/(float)h, 0.0001, 10000, proj);
+            float aspect = (float)w / (float)h;
+            float hh = cameraHeight / 2.0;
+            matrixOrtho(-hh*aspect, hh*aspect, -hh, hh, 0.001, 10000, proj);
             Mat4f vp = view * proj;
 
             glViewport(0, 0, w, h);
