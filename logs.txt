@@ -82,3 +82,10 @@ CHECKLIST:
 
 9/30
     Made a really simple background scene
+    --9/31 // today was also the day I messed with the compositor/mist pass using this:
+    https://www.youtube.com/watch?v=uXXYUv-793c&ab_channel=Markom3D
+
+9/31
+    learned about array modifier in blender, used it to make a shitload of windows. Half followed a tutorial and half freestyled adding a
+    backgound image to the compositor.
+
