@@ -15,6 +15,11 @@ int playerFrame = 0;
 float playerFrameAcc = 0;
 bool playerFacingRight = true;
 
+Animation run = { };
+Animation idle = { };
+Animation punch = { };
+Animation* anim = &run;
+
 void s_playerTick(Entity* e) {
     float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
     e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
@@ -33,6 +38,7 @@ void s_playerTick(Entity* e) {
     e->velocity.x *= 0.95;
 }
 
+#define FRAME_COUNT 25
 void s_playerFrame(Entity* e) {
     if(globs.time - playerJumpBufferTime > 0.1) {
         playerJumpBuffered = false;
@@ -51,15 +57,39 @@ void s_playerFrame(Entity* e) {
         playerFacingRight = true;
     }
 
+    {
+        Animation* prevAnim = anim;
+
+        if(anim != &punch || (anim == &punch && playerFrame == punch.frameCount -1)) {
+            if(globs.inputs[INPUT_PUNCH].val) {
+                anim = &punch;
+            }
+            else if(globs.inputs[INPUT_MOVEX].val != 0) {
+                anim = &run;
+            }
+            else {
+                anim = &idle;
+            }
+        }
+
+
+        if(anim != prevAnim) {
+            playerFrame = 0;
+            e->texture = anim->sheet;
+            e->textureStart = { 0, 0 };
+            e->textureEnd = { 1.0/anim->frameCount, 1 };
+        };
+    }
+
     playerFrameAcc += globs.dt;
     if(playerFrameAcc > (1/30.0)) {
         playerFrameAcc = 0;
         playerFrame++;
-        if(playerFrame >= 20) {
-            playerFrame = playerFrame % 20;
+        if(playerFrame >= anim->frameCount) {
+            playerFrame = playerFrame % anim->frameCount;
         }
 
-        float offset = 1.0 / 20.0;
+        float offset = 1.0 / anim->frameCount;
         e->textureStart = { (playerFrame + !playerFacingRight)*offset, 0 };
         e->textureEnd = { (playerFrame + playerFacingRight)*offset, 1 };
     }

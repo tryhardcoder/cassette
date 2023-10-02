@@ -53,6 +53,13 @@ bool p_AABB_intersect(V2f aHs, V2f bHs, V2f aPos, V2f bPos, p_Manifold* out) {
     return false;
 }
 
+
+struct Animation {
+    U32 frameCount = 0;
+    Texture* sheet = nullptr;
+};
+
+
 enum EntityFlag {
     entityFlag_none =       0,
     entityFlag_render =     (1 << 0),
@@ -97,7 +104,8 @@ typedef struct {
 
 #define INPUT_MOVEX 0
 #define INPUT_JUMP 1
-#define INPUT_DEBUG_DRAW_TOGGLE 2
+#define INPUT_PUNCH 2
+#define INPUT_DEBUG_DRAW_TOGGLE 3
 
 struct Globs {
     BumpAlloc frameArena;
@@ -105,9 +113,10 @@ struct Globs {
     Entity* firstEntity = nullptr;
     U32 entityCount = 0;
 
-    Input inputs[3] = {
+    Input inputs[4] = {
         { 0, 0, GLFW_KEY_D, GLFW_KEY_A },
         { 0, 0, GLFW_KEY_SPACE, 0 },
+        { 0, 0, GLFW_KEY_J, 0 },
         { 0, 0, GLFW_KEY_TAB, 0 },
     };
 

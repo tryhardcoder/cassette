@@ -157,7 +157,14 @@ int main() {
     // loading player
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
+
+        idle.frameCount = 25;
+        idle.sheet = makeTexture("res/textures/idle.png", &globs.levelArena);
+        run.frameCount = 20;
+        run.sheet = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
+        punch.frameCount = 24;
+        punch.sheet = makeTexture("res/textures/punch.png", &globs.levelArena);
+
         e->scale = { 1, 1 };
         e->flags |= entityFlag_render;
 
@@ -218,9 +225,10 @@ int main() {
         e->texture = makeTexture("res/textures/brick.png", &globs.levelArena);
         e->flags |= entityFlag_render;
         e->position = V2f(-10, 0);
-        e->scale = { 1, 6 };
+        float height = 1;
+        e->scale = { 1, height/2 };
 
-        e->colliderHalfSize = { 1, 6 };
+        e->colliderHalfSize = { 1, height/2 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
