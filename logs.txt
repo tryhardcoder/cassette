@@ -8,7 +8,6 @@ CHECKLIST:
         [ ] particle system
         [ ] UI system
         [ ] player controller
-        [ ] boss controller
         [ ] boss AI
         [ ] pause menu
         [ ] main menu
@@ -29,6 +28,7 @@ CHECKLIST:
             [ ] pause menu
 
         [ ] demo level background
+        [ ] Boss
             [ ] base design
             [ ] walk
             [ ] attack
@@ -42,6 +42,10 @@ CHECKLIST:
             [ ] dash
             [ ] hurt
             [ ] death
+
+    BUGS:
+        background image aspect is not cool
+        player idle and walk appear smaller than punch
 
 
 
@@ -89,3 +93,4 @@ CHECKLIST:
     learned about array modifier in blender, used it to make a shitload of windows. Half followed a tutorial and half freestyled adding a
     backgound image to the compositor.
 
+10/3 fixed sprite aspect issues

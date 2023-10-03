@@ -82,7 +82,7 @@ void s_playerFrame(Entity* e) {
     }
 
     playerFrameAcc += globs.dt;
-    if(playerFrameAcc > (1/30.0)) {
+    if(playerFrameAcc > (1/40.0)) {
         playerFrameAcc = 0;
         playerFrame++;
         if(playerFrame >= anim->frameCount) {

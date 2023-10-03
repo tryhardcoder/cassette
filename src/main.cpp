@@ -389,11 +389,15 @@ int main() {
                 b->textureId = e->texture->id;
                 b->srcStart = e->textureStart;
                 b->srcEnd = e->textureEnd;
+                float texAspect = (float)e->texture->width / (float)e->texture->height;
+                V2f subTexSize = e->textureEnd - e->textureStart;
+                float aspect = (subTexSize.x / subTexSize.y) * texAspect;
+                aspect = fabsf(aspect);
                 b->model = matrixTransform(
                     e->position.x, e->position.y,
                     e->zIndex,
                     0,
-                    e->scale.x, e->scale.y);
+                    e->scale.x * aspect, e->scale.y);
             }
             if(debugDrawEnabled) {
                 if(e->flags & entityFlag_collision) {
