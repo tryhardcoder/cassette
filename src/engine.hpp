@@ -1,4 +1,6 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 #include "base/typedefs.h"
 #include "base/geometry.h"
 #include "base/allocators.h"
@@ -56,7 +58,7 @@ bool p_AABB_intersect(V2f aHs, V2f bHs, V2f aPos, V2f bPos, p_Manifold* out) {
 
 struct Animation {
     U32 frameCount = 0;
-    Texture* sheet = nullptr;
+    Texture* tex = nullptr;
 };
 
 
@@ -66,6 +68,7 @@ enum EntityFlag {
     entityFlag_tickFunc =   (1 << 1),
     entityFlag_frameFunc =  (1 << 2),
     entityFlag_collision =  (1 << 3),
+    entityFlag_animation =  (1 << 4),
 };
 
 typedef struct Entity Entity;
@@ -77,6 +80,11 @@ struct Entity {
     Texture* texture = nullptr;
     V2f position = V2f();
     V2f velocity = V2f();
+
+    Animation* animation = nullptr;
+    U32 animFrame = 0;
+    float animAcc = 0;
+    float animFPS = (1/40.0);
 
     V2f colliderHalfSize = V2f();
     U32 layer = 0;
@@ -128,5 +136,3 @@ void initGlobs() {
     bump_allocate(&globs.levelArena, 10000000);
     bump_allocate(&globs.frameArena, 10000000);
 }
-
-

@@ -3,14 +3,16 @@ CHECKLIST:
     CODE:
         [X] textured quad renderer
         [X] simple physics
-        [ ] animation system
-        [ ] sfx and music system
-        [ ] particle system
-        [ ] UI system
+        [X] animation system
         [ ] player controller
+        [ ] hit system for dummy
+        [ ] player hurt system
         [ ] boss AI
+        [ ] UI system
         [ ] pause menu
         [ ] main menu
+        [ ] particle system
+        [ ] sfx and music system
 
     ART:
         [ ] SFX
@@ -27,7 +29,7 @@ CHECKLIST:
             [ ] main menu
             [ ] pause menu
 
-        [ ] demo level background
+        [X] demo level background
         [ ] Boss
             [ ] base design
             [ ] walk
@@ -35,17 +37,35 @@ CHECKLIST:
             [ ] death
 
         [ ] player
-            [ ] base design
-            [ ] idle
-            [ ] walk
-            [ ] attack
-            [ ] dash
+            [X] base design
+            [X] idle
+            [X] walk
+            [X] attack
+            [ ] roll
             [ ] hurt
             [ ] death
 
     BUGS:
         background image aspect is not cool
         player idle and walk appear smaller than punch
+
+
+TIMELINE:
+11 weeks total
+3 weeks buffer
+
+8 weeks of work:
+    W-1: project setup and redering/ physics basics
+    W0: programming/ player deisgn/basics of learning blender
+    W1: design for player and animation
+    W2: design for player and animation
+    W3: boss design and animation
+    W4: boss design and animation
+
+    W5: programming player controller, hurt system
+    W6: programming player controller, rolls/Iframes
+    W7: programming boss AI
+    W8: programming boss AI
 
 
 
@@ -94,3 +114,7 @@ CHECKLIST:
     backgound image to the compositor.
 
 10/3 fixed sprite aspect issues
+
+10/5
+factored out animation system into a flag so that things like the dummy and boss and possibly background can be animated
+added an invalid texture to help debugg null textures without crashing

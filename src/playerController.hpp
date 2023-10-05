@@ -11,14 +11,11 @@ bool playerJumpBuffered = false;
 float playerJumpBufferTime = 0;
 bool grounded = false;
 
-int playerFrame = 0;
-float playerFrameAcc = 0;
 bool playerFacingRight = true;
 
 Animation run = { };
 Animation idle = { };
 Animation punch = { };
-Animation* anim = &run;
 
 void s_playerTick(Entity* e) {
     float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
@@ -50,48 +47,36 @@ void s_playerFrame(Entity* e) {
         playerJumpBufferTime = globs.time;
     }
 
-    if(globs.inputs[INPUT_MOVEX].val < 0) {
-        playerFacingRight = false;
-    }
-    if(globs.inputs[INPUT_MOVEX].val > 0) {
-        playerFacingRight = true;
+    {
+        if(globs.inputs[INPUT_MOVEX].val < 0) {
+            playerFacingRight = false;
+        }
+        if(globs.inputs[INPUT_MOVEX].val > 0) {
+            playerFacingRight = true;
+        }
+        if(playerFacingRight) {
+            e->scale.x = fabsf(e->scale.x);
+        } else {
+            e->scale.x = -fabsf(e->scale.x);
+        }
     }
 
     {
-        Animation* prevAnim = anim;
+        Animation* prevAnim = e->animation;
 
-        if(anim != &punch || (anim == &punch && playerFrame == punch.frameCount -1)) {
+        if(e->animation != &punch || (e->animation == &punch && e->animFrame == punch.frameCount -1)) {
             if(globs.inputs[INPUT_PUNCH].val) {
-                anim = &punch;
-            }
-            else if(globs.inputs[INPUT_MOVEX].val != 0) {
-                anim = &run;
-            }
-            else {
-                anim = &idle;
+                e->animation = &punch;
+            } else if(globs.inputs[INPUT_MOVEX].val != 0) {
+                e->animation = &run;
+            } else {
+                e->animation = &idle;
             }
         }
 
-
-        if(anim != prevAnim) {
-            playerFrame = 0;
-            e->texture = anim->sheet;
-            e->textureStart = { 0, 0 };
-            e->textureEnd = { 1.0/anim->frameCount, 1 };
+        if(e->animation != prevAnim) {
+            e->animFrame = 0;
         };
-    }
-
-    playerFrameAcc += globs.dt;
-    if(playerFrameAcc > (1/40.0)) {
-        playerFrameAcc = 0;
-        playerFrame++;
-        if(playerFrame >= anim->frameCount) {
-            playerFrame = playerFrame % anim->frameCount;
-        }
-
-        float offset = 1.0 / anim->frameCount;
-        e->textureStart = { (playerFrame + !playerFacingRight)*offset, 0 };
-        e->textureEnd = { (playerFrame + playerFacingRight)*offset, 1 };
     }
 }
 

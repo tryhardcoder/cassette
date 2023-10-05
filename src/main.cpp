@@ -154,16 +154,20 @@ int main() {
     V2f cameraPos = { 0, 3.9 };
     float cameraZ = 10;
 
+    Texture* invalidTexture = makeTexture("res/textures/noTexture.png", &globs.levelArena);
+
     // loading player
     {
         Entity* e = registerEntity();
 
         idle.frameCount = 25;
-        idle.sheet = makeTexture("res/textures/idle.png", &globs.levelArena);
+        idle.tex = makeTexture("res/textures/idle.png", &globs.levelArena);
         run.frameCount = 20;
-        run.sheet = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
+        run.tex = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
         punch.frameCount = 24;
-        punch.sheet = makeTexture("res/textures/punch.png", &globs.levelArena);
+        punch.tex = makeTexture("res/textures/punch.png", &globs.levelArena);
+        e->animation = &idle;
+        e->flags |= entityFlag_animation;
 
         e->scale = { 1, 1 };
         e->flags |= entityFlag_render;
@@ -381,18 +385,39 @@ int main() {
 
         Entity* e = globs.firstEntity;
         while(e) {
+            if(e->flags & entityFlag_animation) {
+                e->animAcc += globs.dt;
+
+                if(e->animAcc > e->animFPS) {
+                    e->animAcc -= e->animFPS;
+                    e->animFrame++;
+                    if(e->animFrame >= e->animation->frameCount) {
+                        e->animFrame = e->animFrame % e->animation->frameCount;
+                    }
+                }
+
+                float offset = 1.0 / e->animation->frameCount;
+                e->texture = e->animation->tex;
+                e->textureStart = { e->animFrame * offset, 0 };
+                e->textureEnd = { (e->animFrame+1) * offset, 1 };
+            }
             if(e->flags & entityFlag_frameFunc) {
                 e->frameFunc(e);
             }
             if(e->flags & entityFlag_render) {
                 UniBlock* b = BUMP_PUSH_NEW(&renderCallArena, UniBlock);
-                b->textureId = e->texture->id;
-                b->srcStart = e->textureStart;
-                b->srcEnd = e->textureEnd;
-                float texAspect = (float)e->texture->width / (float)e->texture->height;
-                V2f subTexSize = e->textureEnd - e->textureStart;
-                float aspect = (subTexSize.x / subTexSize.y) * texAspect;
-                aspect = fabsf(aspect);
+                float aspect = 1;
+                if(e->texture) {
+                    b->textureId = e->texture->id;
+                    b->srcStart = e->textureStart;
+                    b->srcEnd = e->textureEnd;
+                    float texAspect = (float)e->texture->width / (float)e->texture->height;
+                    V2f subTexSize = e->textureEnd - e->textureStart;
+                    aspect = (subTexSize.x / subTexSize.y) * texAspect;
+                    aspect = fabsf(aspect);
+                } else {
+                    b->textureId = invalidTexture->id;
+                }
                 b->model = matrixTransform(
                     e->position.x, e->position.y,
                     e->zIndex,
