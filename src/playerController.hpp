@@ -8,6 +8,7 @@ float maxVelocity = 8;
 float velocitySnap = 0.15; // percent of target vel to set to every frame
 
 float rollSpeed = 10;
+float rollSnap = 0.25;
 
 bool playerJumpBuffered = false;
 float playerJumpBufferTime = 0;
@@ -22,7 +23,7 @@ Animation roll = { };
 
 void s_playerTick(Entity* e) {
 
-    if(e->animation == &idle || e->animation == &run) {
+    if(e->animation == &idle || e->animation == &run || e->animation == &punch) {
         float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
         e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
 
@@ -33,7 +34,7 @@ void s_playerTick(Entity* e) {
         grounded = false;
     }
     else if(e->animation == &roll) {
-        e->velocity.x = lerp(e->velocity.x, rollSpeed * (playerFacingRight?-1:1), velocitySnap);
+        e->velocity.x = lerp(e->velocity.x, rollSpeed * (playerFacingRight?1:-1), rollSnap);
     }
 
     if(e->position.y < -10) {
