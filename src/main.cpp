@@ -166,6 +166,9 @@ int main() {
         run.tex = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
         punch.frameCount = 24;
         punch.tex = makeTexture("res/textures/punch.png", &globs.levelArena);
+        roll.frameCount = 29;
+        roll.tex = makeTexture("res/textures/roll.png", &globs.levelArena);
+
         e->animation = &idle;
         e->flags |= entityFlag_animation;
 
@@ -186,9 +189,16 @@ int main() {
 
     {
         Entity* e = registerEntity();
+        e->flags |= entityFlag_collision;
+        e->layer = (1<<1);
+        e->mask = (1<<1);
+        e->colliderHalfSize = { 0.5, 0.25 };
+    }
+
+    {
+        Entity* e = registerEntity();
         e->texture = makeTexture("res/textures/background.png", &globs.levelArena);
-        float asp = (float)e->texture->width / (float)e->texture->height;
-        e->scale = { cameraHeight*asp/2, cameraHeight/2 };
+        e->scale = { cameraHeight/2, cameraHeight/2 };
         e->flags |= entityFlag_render;
         e->zIndex = -1;
         e->position = cameraPos;

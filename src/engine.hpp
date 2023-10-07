@@ -113,7 +113,8 @@ typedef struct {
 #define INPUT_MOVEX 0
 #define INPUT_JUMP 1
 #define INPUT_PUNCH 2
-#define INPUT_DEBUG_DRAW_TOGGLE 3
+#define INPUT_ROLL 3
+#define INPUT_DEBUG_DRAW_TOGGLE 4
 
 struct Globs {
     BumpAlloc frameArena;
@@ -121,10 +122,11 @@ struct Globs {
     Entity* firstEntity = nullptr;
     U32 entityCount = 0;
 
-    Input inputs[4] = {
+    Input inputs[5] = {
         { 0, 0, GLFW_KEY_D, GLFW_KEY_A },
         { 0, 0, GLFW_KEY_SPACE, 0 },
         { 0, 0, GLFW_KEY_J, 0 },
+        { 0, 0, GLFW_KEY_K, 0 },
         { 0, 0, GLFW_KEY_TAB, 0 },
     };
 

@@ -7,6 +7,8 @@ V2f gravity = { 0, -30 };
 float maxVelocity = 8;
 float velocitySnap = 0.15; // percent of target vel to set to every frame
 
+float rollSpeed = 10;
+
 bool playerJumpBuffered = false;
 float playerJumpBufferTime = 0;
 bool grounded = false;
@@ -16,21 +18,29 @@ bool playerFacingRight = true;
 Animation run = { };
 Animation idle = { };
 Animation punch = { };
+Animation roll = { };
 
 void s_playerTick(Entity* e) {
-    float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
-    e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
-    e->velocity += gravity * PHYSICS_DT;
-    if(playerJumpBuffered && grounded) {
-        playerJumpBuffered = false;
-        e->velocity.y = 10;
+
+    if(e->animation == &idle || e->animation == &run) {
+        float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
+        e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
+
+        if(playerJumpBuffered && grounded) {
+            playerJumpBuffered = false;
+            e->velocity.y = 10;
+        }
+        grounded = false;
     }
-    grounded = false;
+    else if(e->animation == &roll) {
+        e->velocity.x = lerp(e->velocity.x, rollSpeed * (playerFacingRight?-1:1), velocitySnap);
+    }
 
     if(e->position.y < -10) {
         e->position = {0, 0};
     }
 
+    e->velocity += gravity * PHYSICS_DT;
     e->position += e->velocity * PHYSICS_DT;
     e->velocity.x *= 0.95;
 }
@@ -47,7 +57,7 @@ void s_playerFrame(Entity* e) {
         playerJumpBufferTime = globs.time;
     }
 
-    {
+    if(e->animation != &roll) {
         if(globs.inputs[INPUT_MOVEX].val < 0) {
             playerFacingRight = false;
         }
@@ -65,12 +75,16 @@ void s_playerFrame(Entity* e) {
         Animation* prevAnim = e->animation;
 
         if(e->animation != &punch || (e->animation == &punch && e->animFrame == punch.frameCount -1)) {
-            if(globs.inputs[INPUT_PUNCH].val) {
-                e->animation = &punch;
-            } else if(globs.inputs[INPUT_MOVEX].val != 0) {
-                e->animation = &run;
-            } else {
-                e->animation = &idle;
+            if(e->animation != &roll || (e->animation == &roll && e->animFrame == roll.frameCount -5)) {
+                if(globs.inputs[INPUT_PUNCH].val) {
+                    e->animation = &punch;
+                } else if(globs.inputs[INPUT_ROLL].val) {
+                    e->animation = &roll;
+                } else if(globs.inputs[INPUT_MOVEX].val != 0) {
+                    e->animation = &run;
+                } else {
+                    e->animation = &idle;
+                }
             }
         }
 
