@@ -119,6 +119,6 @@ TIMELINE:
 factored out animation system into a flag so that things like the dummy and boss and possibly background can be animated
 added an invalid texture to help debugg null textures without crashing
 
-10/6
+10/7
 animated and added roll, didn't really learn much except that the sprite animation system has to be separated from the player phyiscs "animations" (rolling/hurt)
 because weather or not the player is responsive is not only dependent on which animation is playing but also where in the animation
