@@ -84,7 +84,7 @@ struct Entity {
     Animation* animation = nullptr;
     U32 animFrame = 0;
     float animAcc = 0;
-    float animFPS = (1/40.0);
+    float animFPS = (1/30.0);
 
     V2f colliderHalfSize = V2f();
     U32 layer = 0;

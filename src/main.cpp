@@ -163,7 +163,7 @@ int main() {
         idle.frameCount = 25;
         idle.tex = makeTexture("res/textures/idle.png", &globs.levelArena);
         run.frameCount = 20;
-        run.tex = makeTexture("res/textures/spritesheet(1).png", &globs.levelArena);
+        run.tex = makeTexture("res/textures/run.png", &globs.levelArena);
         punch.frameCount = 24;
         punch.tex = makeTexture("res/textures/punch.png", &globs.levelArena);
         roll.frameCount = 29;
@@ -172,7 +172,7 @@ int main() {
         e->animation = &idle;
         e->flags |= entityFlag_animation;
 
-        e->scale = { 1, 1 };
+        e->scale = { 0.8, 0.8 };
         e->flags |= entityFlag_render;
 
         e->tickFunc = s_playerTick;
@@ -181,7 +181,7 @@ int main() {
         e->flags |= entityFlag_frameFunc;
 
         e->collideFunc = s_playerCollide;
-        e->colliderHalfSize = { 0.5, 0.85 };
+        e->colliderHalfSize = { 0.4, 0.8 };
         e->layer = 1;
         e->mask = 1;
         e->flags |= entityFlag_collision;
