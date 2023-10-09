@@ -1,3 +1,7 @@
+TIMELINE:
+11 weeks total
+3 weeks buffer
+assume 8 weeks of working time
 
 CHECKLIST:
     CODE:
@@ -5,30 +9,14 @@ CHECKLIST:
         [X] simple physics
         [X] animation system
         [ ] player controller
-        [ ] hit system for dummy
-        [ ] player hurt system
+        [X] hit system for dummy
+        [X] player hurt system
         [ ] boss AI
         [ ] UI system
-        [ ] pause menu
-        [ ] main menu
-        [ ] particle system
-        [ ] sfx and music system
+        [ ] health bars
+        [ ] respawn system
 
     ART:
-        [ ] SFX
-            [ ] music
-            [ ] main menu music
-            [ ] player hit sound
-            [ ] player walk sound
-            [ ] player death sound
-            [ ] boss hit sound
-            [ ] boss walk sound
-            [ ] boss death sound
-
-        [ ] UI
-            [ ] main menu
-            [ ] pause menu
-
         [X] demo level background
         [ ] Boss
             [ ] base design
@@ -45,27 +33,28 @@ CHECKLIST:
             [ ] hurt
             [ ] death
 
+    EXTRA CREDIT:
+        ART:
+            [ ] SFX
+                [ ] music
+                [ ] main menu music
+                [ ] player hit sound
+                [ ] player walk sound
+                [ ] player death sound
+                [ ] boss hit sound
+                [ ] boss walk sound
+                [ ] boss death sound
+
+            [ ] UI
+                [ ] main menu
+                [ ] pause menu
+
+        CODE:
+            [ ] menu logic
+            [ ] particle system
+            [ ] sfx and music system
+
     BUGS:
-    [ ] inifinite hurt loop for player bc no control
-
-TIMELINE:
-11 weeks total
-3 weeks buffer
-
-8 weeks of work:
-    // W-1: project setup and redering/ physics basics
-    // W0: programming/ player deisgn/basics of learning blender
-    // W1: design for player and animation
-    W2: design for player and animation
-    W3: boss design and animation
-    W4: boss design and animation
-
-    W5: programming player controller, hurt system
-    W6: programming player controller, rolls/Iframes
-    W7: programming boss AI
-    W8: programming boss AI
-
-
 
 
 
