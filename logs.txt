@@ -41,23 +41,21 @@ CHECKLIST:
             [X] idle
             [X] walk
             [X] attack
-            [ ] roll
+            [X] roll
             [ ] hurt
             [ ] death
 
     BUGS:
-        background image aspect is not cool
-        player idle and walk appear smaller than punch
-
+    [ ] inifinite hurt loop for player bc no control
 
 TIMELINE:
 11 weeks total
 3 weeks buffer
 
 8 weeks of work:
-    W-1: project setup and redering/ physics basics
-    W0: programming/ player deisgn/basics of learning blender
-    W1: design for player and animation
+    // W-1: project setup and redering/ physics basics
+    // W0: programming/ player deisgn/basics of learning blender
+    // W1: design for player and animation
     W2: design for player and animation
     W3: boss design and animation
     W4: boss design and animation
@@ -124,3 +122,11 @@ animated and added roll, didn't really learn much except that the sprite animati
 because weather or not the player is responsive is not only dependent on which animation is playing but also where in the animation
 
 redid the roll to go forwards because it makes more sense gameplay wise
+
+found this really informative video about arm animation. I don't have IK setup on the rig tho so some it isn't applicable rn
+https://www.youtube.com/watch?v=JnkAlwMjalc&ab_channel=Doodley
+
+10/8
+animated a hurt animation which doesn't look the best, will have to redo at some point
+also came up with the hurt detection by putting colliders on a separate layer and masking for hurt boxes
+the player code is already becoming a huge mess, may have to look into ways to structure it better.

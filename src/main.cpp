@@ -13,6 +13,7 @@
 
 #include "engine.hpp"
 #include "playerController.hpp"
+#include "dummyController.hpp"
 
 Texture* makeTexture(const char* path, BumpAlloc* arena) {
     // CLEANUP: image data is performing an allocaiton that I don't like
@@ -168,6 +169,8 @@ int main() {
         punch.tex = makeTexture("res/textures/punch.png", &globs.levelArena);
         roll.frameCount = 29;
         roll.tex = makeTexture("res/textures/roll.png", &globs.levelArena);
+        hurt.frameCount = 18;
+        hurt.tex = makeTexture("res/textures/hurt.png", &globs.levelArena);
 
         e->animation = &idle;
         e->flags |= entityFlag_animation;
@@ -176,24 +179,25 @@ int main() {
         e->flags |= entityFlag_render;
 
         e->tickFunc = s_playerTick;
-        e->flags |= entityFlag_tickFunc;
         e->frameFunc = s_playerFrame;
-        e->flags |= entityFlag_frameFunc;
 
         e->collideFunc = s_playerCollide;
         e->colliderHalfSize = { 0.4, 0.8 };
-        e->layer = 1;
-        e->mask = 1;
+        e->layer = phl_collision | phl_hurtbox;
+        e->mask = phl_collision;
         e->flags |= entityFlag_collision;
+
+        // attack box
+        {
+            Entity* box = registerEntity();
+            e->playerState.punchBox = box;
+            box->flags |= entityFlag_collision;
+            box->layer = phl_hitbox;
+            box->mask = (0);
+            box->colliderHalfSize = { 0.5, 0.25 };
+        }
     }
 
-    {
-        Entity* e = registerEntity();
-        e->flags |= entityFlag_collision;
-        e->layer = (1<<1);
-        e->mask = (1<<1);
-        e->colliderHalfSize = { 0.5, 0.25 };
-    }
 
     {
         Entity* e = registerEntity();
@@ -211,8 +215,10 @@ int main() {
         e->scale = {1, 1};
         e->flags |= entityFlag_render;
 
-        e->mask = (1<<1);
-        e->layer = (1<<1);
+        e->collideFunc = s_dummyHit;
+
+        e->mask = phl_hurtbox;
+        e->layer = phl_hitbox | phl_hurtbox;
         e->flags |= entityFlag_collision;
         e->colliderHalfSize = { 0.3, 1 };
 
@@ -380,7 +386,7 @@ int main() {
                 // TICKS
                 e = globs.firstEntity;
                 while(e) {
-                    if(e->flags & entityFlag_tickFunc) {
+                    if(e->tickFunc) {
                         e->tickFunc(e);
                     }
                     e = e->next;
@@ -411,7 +417,7 @@ int main() {
                 e->textureStart = { e->animFrame * offset, 0 };
                 e->textureEnd = { (e->animFrame+1) * offset, 1 };
             }
-            if(e->flags & entityFlag_frameFunc) {
+            if(e->frameFunc) {
                 e->frameFunc(e);
             }
             if(e->flags & entityFlag_render) {

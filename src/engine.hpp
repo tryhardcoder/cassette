@@ -6,6 +6,8 @@
 #include "base/allocators.h"
 #include <math.h>
 
+struct Entity;
+
 
 typedef struct {
     U32 textureId = 0;
@@ -62,16 +64,41 @@ struct Animation {
 };
 
 
+enum PlayerCtrlState {
+    ps_controllable,
+    ps_rolling,
+    ps_punching,
+    ps_hurt,
+};
+struct PlayerState {
+    bool jumpBuffered = false;
+    float jumpBufferTime = 0;
+    bool grounded = false;
+
+    bool facingRight = true;
+    PlayerCtrlState ctrlState = ps_controllable;
+
+    Entity* punchBox = nullptr;
+};
+
+struct HitboxData {
+    V2f direction = { 0,0 };
+};
+
+enum {
+    phl_collision = (1),
+    phl_hitbox = (1<<1),
+    phl_hurtbox = (1<<2),
+};
+
+
 enum EntityFlag {
     entityFlag_none =       0,
     entityFlag_render =     (1 << 0),
-    entityFlag_tickFunc =   (1 << 1),
-    entityFlag_frameFunc =  (1 << 2),
-    entityFlag_collision =  (1 << 3),
-    entityFlag_animation =  (1 << 4),
+    entityFlag_collision =  (1 << 1),
+    entityFlag_animation =  (1 << 2),
 };
 
-typedef struct Entity Entity;
 typedef void (*EntityUpdateFunc)(Entity* e);
 typedef void (*p_CollideFunc)(p_Manifold m, Entity* e, Entity* other);
 struct Entity {
@@ -99,6 +126,9 @@ struct Entity {
 
     U32 flags = 0;
     Entity* next = nullptr;
+
+    PlayerState playerState;
+    HitboxData hitboxState;
 };
 
 
