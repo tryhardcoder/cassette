@@ -24,7 +24,7 @@ Animation hurt = { };
 void s_playerTick(Entity* e) {
     PlayerState* p = &e->playerState;
 
-    if(p->ctrlState == ps_controllable || p->ctrlState == ps_punching) {
+    if(p->ctrlState == ps_controllable || p->ctrlState == ps_punching || p->ctrlState == ps_hurt) {
         float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
         e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
 
@@ -61,7 +61,7 @@ void s_playerFrame(Entity* e) {
         p->jumpBufferTime = globs.time;
     }
 
-    if(p->ctrlState == ps_controllable) {
+    if(p->ctrlState == ps_controllable || p->ctrlState == ps_hurt) {
         if(globs.inputs[INPUT_MOVEX].val < 0) {
             p->facingRight = false;
         }
@@ -78,7 +78,7 @@ void s_playerFrame(Entity* e) {
     {
         Animation* prevAnim = e->animation;
 
-        if(p->ctrlState == ps_controllable && e->animFrame == e->animation->frameCount-1) {
+        if(p->ctrlState == ps_controllable) {
             if(globs.inputs[INPUT_PUNCH].val) {
                 e->animation = &punch;
                 p->ctrlState = ps_punching;
@@ -131,7 +131,7 @@ void s_playerCollide(p_Manifold m, Entity* e, Entity* other) {
         if(e->animation == &hurt) { return; }
         if(e->playerState.ctrlState == ps_rolling) { return; }
         e->animation = &hurt;
-        e->playerState.ctrlState = ps_controllable;
+        e->playerState.ctrlState = ps_hurt;
         e->animFrame = 0;
     }
     else {
