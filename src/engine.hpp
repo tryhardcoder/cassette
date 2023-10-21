@@ -152,8 +152,8 @@ extern eng_Globs engGlobs;
 
 void initGlobs();
 UniBlock* registerCall(UniBlock** listHead, BumpAlloc* arena);
-Texture* makeTexture(const char* path, BumpAlloc* arena);
-Texture* makeTexture(U8* data, const int width, const int height, BumpAlloc* arena);
+Texture* makeTexture(const char* path, int bpp, BumpAlloc* arena);
+Texture* makeTexture(U8* data, const int width, const int height, int bpp, BumpAlloc* arena);
 bool p_AABB_intersect(V2f aHs, V2f bHs, V2f aPos, V2f bPos, p_Manifold* out);
 
 #ifdef ENG_IMPL
@@ -176,7 +176,7 @@ UniBlock* registerCall(UniBlock** listHead, BumpAlloc* arena) {
     return b;
 }
 
-Texture* makeTexture(U8* data, const int width, const int height, BumpAlloc* arena) {
+Texture* makeTexture(U8* data, const int width, const int height, int bpp, BumpAlloc* arena) {
     Texture* t = BUMP_PUSH_NEW(arena, Texture);
     t->width = width;
     t->height = height;
@@ -189,17 +189,24 @@ Texture* makeTexture(U8* data, const int width, const int height, BumpAlloc* are
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // NOTE: for pixely looks again, use -> GL_NEAREST as the mag/min filter
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    if(bpp == 4) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    } else if(bpp == 1) {
+        // They lied??????????????????????????
+        // glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction, who knows what thisl do
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, t->width, t->height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+    }
+    else { assert(false); }
     return t;
 }
 
-Texture* makeTexture(const char* path, BumpAlloc* arena) {
+Texture* makeTexture(const char* path, int bpp, BumpAlloc* arena) {
     // CLEANUP: image data is performing an allocaiton that I don't like
     stbi_set_flip_vertically_on_load(1);
-    S32 bpp, w, h;
-    U8* data = stbi_load(path, &w, &h, &bpp, 4);
+    S32 loadedBpp, w, h;
+    U8* data = stbi_load(path, &w, &h, &loadedBpp, bpp);
     ASSERT(data);
-    return makeTexture(data, w, h, arena);
+    return makeTexture(data, w, h, bpp, arena);
 }
 
 

@@ -138,22 +138,22 @@ int main() {
     V2f cameraPos = { 0, 3.9 };
     float cameraZ = 10;
 
-    Texture* invalidTexture = makeTexture("res/textures/noTexture.png", &engGlobs.levelArena);
+    Texture* invalidTexture = makeTexture("res/textures/noTexture.png", 4, &engGlobs.levelArena);
 
     // loading player
     {
         Entity* e = registerEntity();
 
         idle.frameCount = 25;
-        idle.tex = makeTexture("res/textures/idle.png", &engGlobs.levelArena);
+        idle.tex = makeTexture("res/textures/idle.png", 4, &engGlobs.levelArena);
         run.frameCount = 20;
-        run.tex = makeTexture("res/textures/run.png", &engGlobs.levelArena);
+        run.tex = makeTexture("res/textures/run.png", 4, &engGlobs.levelArena);
         punch.frameCount = 24;
-        punch.tex = makeTexture("res/textures/punch.png", &engGlobs.levelArena);
+        punch.tex = makeTexture("res/textures/punch.png", 4, &engGlobs.levelArena);
         roll.frameCount = 29;
-        roll.tex = makeTexture("res/textures/roll.png", &engGlobs.levelArena);
+        roll.tex = makeTexture("res/textures/roll.png", 4, &engGlobs.levelArena);
         hurt.frameCount = 18;
-        hurt.tex = makeTexture("res/textures/hurt.png", &engGlobs.levelArena);
+        hurt.tex = makeTexture("res/textures/hurt.png", 4, &engGlobs.levelArena);
 
         e->animation = &idle;
         e->flags |= entityFlag_animation;
@@ -184,7 +184,7 @@ int main() {
 
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/background.png", &engGlobs.levelArena);
+        e->texture = makeTexture("res/textures/background.png", 4, &engGlobs.levelArena);
         e->scale = { cameraHeight/2, cameraHeight/2 };
         e->flags |= entityFlag_render;
         e->zIndex = -1;
@@ -194,7 +194,7 @@ int main() {
     // dummy
    {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/dummy.png", &engGlobs.levelArena);
+        e->texture = makeTexture("res/textures/dummy.png", 4, &engGlobs.levelArena);
         e->scale = {1, 1};
         e->flags |= entityFlag_render;
 
@@ -225,7 +225,7 @@ int main() {
     }
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/brick.png", &engGlobs.levelArena);
+        e->texture = makeTexture("res/textures/brick.png", 4, &engGlobs.levelArena);
         e->flags |= entityFlag_render;
         e->position = V2f(-10, 0);
         float height = 1;
@@ -277,9 +277,10 @@ int main() {
 
 
 
-    Texture* solidTex = makeTexture("res/textures/solid.png", &engGlobs.levelArena);
+    Texture* solidTex = makeTexture("res/textures/solid.png", 4, &engGlobs.levelArena);
     blu_init(solidTex);
-    blu_loadFont("C:/windows/fonts/consola.ttf", &engGlobs.levelArena);
+    Texture* font = nullptr;
+    blu_loadFont("C:/windows/fonts/consola.ttf", &engGlobs.levelArena, &font);
 
 
 
@@ -299,29 +300,27 @@ int main() {
 
         {
             blu_styleScope(blu_Style()) {
-                blu_style_textColor({1, 1, 1, 1});
-                blu_style_sizeX({ blu_sizeKind_TEXT, 1 });
+                blu_style_sizeX({ blu_sizeKind_PERCENT, 1 });
                 blu_style_sizeY({ blu_sizeKind_TEXT, 1 });
                 blu_style_backgroundColor({ 0.5, 0.5, 0.5, 0.5 });
-                blu_style_textPadding({4, 4});
+                blu_style_textColor({1, 1, 1, 1});
+                blu_style_textPadding({2, 2});
                 blu_style_childLayoutAxis(blu_axis_Y);
 
-                blu_Area* a = blu_areaMake("debug panel", blu_areaFlags_DRAW_BACKGROUND);
-                a->style.sizes[blu_axis_X] = { blu_sizeKind_CHILDSUM, 0 };
+                blu_Area* a = blu_areaMake("debug panel", 0);
+                a->style.sizes[blu_axis_X] = { blu_sizeKind_PX, 300 };
                 a->style.sizes[blu_axis_Y] = { blu_sizeKind_CHILDSUM, 0 };
 
                 blu_parentScope(a) {
                     a = blu_areaMake("debug draw??", blu_areaFlags_DRAW_TEXT | blu_areaFlags_DRAW_BACKGROUND | blu_areaFlags_HOVER_ANIM | blu_areaFlags_CLICKABLE);
-                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, {.75, .75, .75, .75}, a->target_hoverAnim);
+                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, {.8, .8, .8, 1}, a->target_hoverAnim);
                     str s = str_format(&engGlobs.frameArena, STR("Debug draw: %b"), debugDrawEnabled);
                     blu_areaAddDisplayStr(a, s);
 
                     a = blu_areaMake("text", blu_areaFlags_DRAW_TEXT | blu_areaFlags_DRAW_BACKGROUND | blu_areaFlags_HOVER_ANIM | blu_areaFlags_CLICKABLE);
-                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, {.75, .75, .75, .75}, a->target_hoverAnim);
+                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, V4f{.8, .8, .8, 1}, a->target_hoverAnim);
                     blu_areaAddDisplayStr(a, "Hello world!");
                 }
-
-
             }
         }
 
@@ -499,58 +498,6 @@ int main() {
             glClearColor(0.1, 0.1, 0.1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // UI
-            {
-                Mat4f vp;
-                matrixOrtho(0, w, h, 0, 0.0001, 10000, vp);
-                blu_makeDrawCalls(&firstBlueCall);
-
-                glUseProgram(blueShader);
-                glBindVertexArray(va);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-
-                int loc = glGetUniformLocation(blueShader, "uVP");
-                glUniformMatrix4fv(loc, 1, false, &vp[0]);
-
-                UniBlock* b = firstBlueCall;
-                while(b) {
-                    loc = glGetUniformLocation(blueShader, "uBorderColor");
-                    glUniform4f(loc, b->borderColor.x, b->borderColor.y, b->borderColor.z, b->borderColor.w);
-                    loc = glGetUniformLocation(blueShader, "uBorderSize");
-                    glUniform1f(loc, b->borderSize);
-                    loc = glGetUniformLocation(blueShader, "uCornerRadius");
-                    glUniform1f(loc, b->cornerRadius);
-
-                    loc = glGetUniformLocation(blueShader, "uDstStart");
-                    glUniform2f(loc, b->dstStart.x, b->dstStart.y);
-                    loc = glGetUniformLocation(blueShader, "uDstEnd");
-                    glUniform2f(loc, b->dstEnd.x, b->dstEnd.y);
-                    loc = glGetUniformLocation(blueShader, "uSrcStart");
-                    glUniform2f(loc, b->srcStart.x, b->srcStart.y);
-                    loc = glGetUniformLocation(blueShader, "uSrcEnd");
-                    glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
-                    loc = glGetUniformLocation(blueShader, "uClipStart");
-                    glUniform2f(loc, b->clipStart.x, b->clipStart.y);
-                    loc = glGetUniformLocation(blueShader, "uClipEnd");
-                    glUniform2f(loc, b->clipEnd.x, b->clipEnd.y);
-
-                    loc = glGetUniformLocation(blueShader, "uColor");
-                    glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
-
-                    loc = glGetUniformLocation(blueShader, "uTexture");
-                    glUniform1i(loc, 0);
-                    glActiveTexture(GL_TEXTURE0 + 0);
-                    glBindTexture(GL_TEXTURE_2D, b->textureId);
-
-                    loc = glGetUniformLocation(blueShader, "uFontTexture");
-                    glUniform1i(loc, 1);
-                    glActiveTexture(GL_TEXTURE0 + 1);
-                    glBindTexture(GL_TEXTURE_2D, b->fontTextureId);
-
-                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-                    b = b->next;
-                }
-            }
 
             // scene objects
             {
@@ -597,6 +544,61 @@ int main() {
                     glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, nullptr);
                     b = b->next;
                 }
+            }
+
+            // UI
+            {
+                Mat4f vp;
+                matrixOrtho(0, w, h, 0, 0.0001, 10000, vp);
+                blu_makeDrawCalls(&firstBlueCall);
+
+                glUseProgram(blueShader);
+                glBindVertexArray(va);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+
+                int loc = glGetUniformLocation(blueShader, "uVP");
+                glUniformMatrix4fv(loc, 1, false, &vp[0]);
+
+                glDepthFunc(GL_LESS);
+                UniBlock* b = firstBlueCall;
+                while(b) {
+                    loc = glGetUniformLocation(blueShader, "uBorderColor");
+                    glUniform4f(loc, b->borderColor.x, b->borderColor.y, b->borderColor.z, b->borderColor.w);
+                    loc = glGetUniformLocation(blueShader, "uBorderSize");
+                    glUniform1f(loc, b->borderSize);
+                    loc = glGetUniformLocation(blueShader, "uCornerRadius");
+                    glUniform1f(loc, b->cornerRadius);
+
+                    loc = glGetUniformLocation(blueShader, "uDstStart");
+                    glUniform2f(loc, b->dstStart.x, b->dstStart.y);
+                    loc = glGetUniformLocation(blueShader, "uDstEnd");
+                    glUniform2f(loc, b->dstEnd.x, b->dstEnd.y);
+                    loc = glGetUniformLocation(blueShader, "uSrcStart");
+                    glUniform2f(loc, b->srcStart.x, b->srcStart.y);
+                    loc = glGetUniformLocation(blueShader, "uSrcEnd");
+                    glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
+                    loc = glGetUniformLocation(blueShader, "uClipStart");
+                    glUniform2f(loc, b->clipStart.x, b->clipStart.y);
+                    loc = glGetUniformLocation(blueShader, "uClipEnd");
+                    glUniform2f(loc, b->clipEnd.x, b->clipEnd.y);
+
+                    loc = glGetUniformLocation(blueShader, "uColor");
+                    glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
+
+                    loc = glGetUniformLocation(blueShader, "uTexture");
+                    glUniform1i(loc, 0);
+                    glActiveTexture(GL_TEXTURE0 + 0);
+                    glBindTexture(GL_TEXTURE_2D, b->textureId);
+
+                    loc = glGetUniformLocation(blueShader, "uFontTexture");
+                    glUniform1i(loc, 1);
+                    glActiveTexture(GL_TEXTURE0 + 1);
+                    glBindTexture(GL_TEXTURE_2D, b->fontTextureId);
+
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                    b = b->next;
+                }
+                glDepthFunc(GL_LESS | GL_EQUAL);
             }
         }
 

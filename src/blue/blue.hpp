@@ -126,7 +126,7 @@ struct blu_Style {
     V4f backgroundColor = V4f();
     V4f textColor = V4f();
     V2f textPadding = V2f();
-    F32 animationStrength = 0;
+    F32 animationStrength = 0.1;
     F32 cornerRadius = 0;
     V4f borderColor = V4f();
     F32 borderSize = 0;
@@ -241,7 +241,7 @@ struct blu_WidgetInteraction {
 // TODO: documentation
 
 void blu_init(Texture* solidTex);
-void blu_loadFont(const char* path, BumpAlloc* arena);
+void blu_loadFont(const char* path, BumpAlloc* arena, Texture** outTex);
 void blu_beginFrame(); // cull, reset globals
 // build code goes here
 void blu_layout(V2f scSize); // calculate layout shit
@@ -281,7 +281,7 @@ blu_WidgetInteraction blu_interactionFromWidget(blu_Area* area);
 #define blu_parentScope(parent) blu_deferLoop(blu_pushParent(parent), blu_popParent())
 
 
-#define BLU_FONT_SIZE 20 // in px
+#define BLU_FONT_SIZE 15 // in px
 
 #ifdef BLU_IMPL
 
@@ -373,7 +373,7 @@ void blu_init(Texture* solidTex) {
     globs.hash = (blu_Area**)arr_allocate0(sizeof(blu_Area*), BLU_AREA_HASH_COUNT);
 }
 
-void blu_loadFont(const char* path, BumpAlloc* arena) {
+void blu_loadFont(const char* path, BumpAlloc* arena, Texture** outTex) {
 
     U64 size;
     U8* fontBuffer = loadFileToBuffer(path, false, &size, &globs.frameArena);
@@ -386,7 +386,8 @@ void blu_loadFont(const char* path, BumpAlloc* arena) {
     // TODO: put stbtt allocations into arenas
     // TODO: get rid of this lol
     stbtt_BakeFontBitmap(fontBuffer, 0, BLU_FONT_SIZE, imgbuf, texSize, texSize, 32, BLU_FONT_CHARCOUNT, glyphInfo); // no guarantee this fits!
-    globs.fontTex = makeTexture(imgbuf, texSize, texSize, arena);
+    globs.fontTex = makeTexture(imgbuf, texSize, texSize, 1, arena);
+    *outTex = globs.fontTex;
 
     stbtt_fontinfo fInfo;
     stbtt_InitFont(&fInfo, fontBuffer, 0);
