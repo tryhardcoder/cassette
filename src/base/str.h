@@ -40,6 +40,7 @@ void str_printf(str fmt, ...);
 float str_toFloat(str s);
 
 
+str str_format(BumpAlloc* arena, const char* fmt, ...);
 str str_format(BumpAlloc* arena, str fmt, ...);
 
 
