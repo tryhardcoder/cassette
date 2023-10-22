@@ -8,7 +8,7 @@ CHECKLIST:
         [ ] hit system for dummy
         [ ] player hurt system
         [ ] boss AI
-        [ ] UI system
+        [X] UI system
         [ ] pause menu
         [ ] main menu
         [ ] particle system
@@ -130,3 +130,8 @@ https://www.youtube.com/watch?v=JnkAlwMjalc&ab_channel=Doodley
 animated a hurt animation which doesn't look the best, will have to redo at some point
 also came up with the hurt detection by putting colliders on a separate layer and masking for hurt boxes
 the player code is already becoming a huge mess, may have to look into ways to structure it better.
+
+10/21
+spent some time adapting the blue UI library into the project and got it rendering. Pretty uneventful, not text is on screen.
+There are some problems with it, like how all of the Uniform blocks aren't unions, and how doing format strings in UI is a huge pain.
+Those are things to do in other projects.
