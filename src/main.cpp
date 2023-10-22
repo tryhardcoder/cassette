@@ -7,6 +7,7 @@
 #include "stb_image/stb_image.h"
 #include "stb_truetype/stb_truetype.h"
 #include "GLAD/gl.h"
+#include "blue/blue.hpp"
 
 #include "base/utils.h"
 #include "base/geometry.h"
@@ -15,40 +16,17 @@
 #include "playerController.hpp"
 #include "dummyController.hpp"
 
-Texture* makeTexture(const char* path, BumpAlloc* arena) {
-    // CLEANUP: image data is performing an allocaiton that I don't like
-    stbi_set_flip_vertically_on_load(1);
-    S32 bpp, w, h;
-    U8* data = stbi_load(path, &w, &h, &bpp, 4);
-    ASSERT(data);
-
-    Texture* t = BUMP_PUSH_NEW(arena, Texture);
-    t->width = w;
-    t->height = h;
-
-    glGenTextures(1, &t->id);
-    glBindTexture(GL_TEXTURE_2D, t->id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // NOTE: for pixely looks again, use -> GL_NEAREST as the mag/min filter
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t->width, t->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    return t;
-}
-
 // asserts of failure
 U32 registerShader(const char* vPath, const char* fPath) {
     U32 shaderId = 0;
     int err = 0;
 
     U64 vertSize;
-    U8* vertSrc = loadFileToBuffer(vPath, true, &vertSize, &globs.frameArena);
+    U8* vertSrc = loadFileToBuffer(vPath, true, &vertSize, &engGlobs.frameArena);
     assert(vertSrc);
 
     U64 fragSize;
-    U8* fragSrc = loadFileToBuffer(fPath, true, &fragSize, &globs.frameArena);
+    U8* fragSrc = loadFileToBuffer(fPath, true, &fragSize, &engGlobs.frameArena);
     assert(fragSrc);
 
     //compile src into shader code
@@ -63,7 +41,7 @@ U32 registerShader(const char* vPath, const char* fPath) {
     glCompileShader(f);
 
     bool compFailed = false;
-    char* logBuffer = BUMP_PUSH_ARR(&globs.frameArena, 512, char);
+    char* logBuffer = BUMP_PUSH_ARR(&engGlobs.frameArena, 512, char);
 
     glGetShaderiv(v, GL_COMPILE_STATUS, &err);
     if(!err) {
@@ -99,10 +77,15 @@ U32 registerShader(const char* vPath, const char* fPath) {
 }
 
 Entity* registerEntity() {
-    Entity* e = BUMP_PUSH_NEW(&globs.levelArena, Entity);
-    SLL_PUSH_FRONT(e, globs.firstEntity);
-    globs.entityCount++;
+    Entity* e = BUMP_PUSH_NEW(&engGlobs.levelArena, Entity);
+    SLL_PUSH_FRONT(e, engGlobs.firstEntity);
+    engGlobs.entityCount++;
     return e;
+}
+
+float windowScrollDelta = 0;
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    windowScrollDelta -= (F32)yoffset;
 }
 
 int main() {
@@ -155,22 +138,22 @@ int main() {
     V2f cameraPos = { 0, 3.9 };
     float cameraZ = 10;
 
-    Texture* invalidTexture = makeTexture("res/textures/noTexture.png", &globs.levelArena);
+    Texture* invalidTexture = makeTexture("res/textures/noTexture.png", 4, &engGlobs.levelArena);
 
     // loading player
     {
         Entity* e = registerEntity();
 
         idle.frameCount = 25;
-        idle.tex = makeTexture("res/textures/idle.png", &globs.levelArena);
+        idle.tex = makeTexture("res/textures/idle.png", 4, &engGlobs.levelArena);
         run.frameCount = 20;
-        run.tex = makeTexture("res/textures/run.png", &globs.levelArena);
+        run.tex = makeTexture("res/textures/run.png", 4, &engGlobs.levelArena);
         punch.frameCount = 24;
-        punch.tex = makeTexture("res/textures/punch.png", &globs.levelArena);
+        punch.tex = makeTexture("res/textures/punch.png", 4, &engGlobs.levelArena);
         roll.frameCount = 29;
-        roll.tex = makeTexture("res/textures/roll.png", &globs.levelArena);
+        roll.tex = makeTexture("res/textures/roll.png", 4, &engGlobs.levelArena);
         hurt.frameCount = 18;
-        hurt.tex = makeTexture("res/textures/hurt.png", &globs.levelArena);
+        hurt.tex = makeTexture("res/textures/hurt.png", 4, &engGlobs.levelArena);
 
         e->animation = &idle;
         e->flags |= entityFlag_animation;
@@ -201,7 +184,7 @@ int main() {
 
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/background.png", &globs.levelArena);
+        e->texture = makeTexture("res/textures/background.png", 4, &engGlobs.levelArena);
         e->scale = { cameraHeight/2, cameraHeight/2 };
         e->flags |= entityFlag_render;
         e->zIndex = -1;
@@ -211,7 +194,7 @@ int main() {
     // dummy
    {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/dummy.png", &globs.levelArena);
+        e->texture = makeTexture("res/textures/dummy.png", 4, &engGlobs.levelArena);
         e->scale = {1, 1};
         e->flags |= entityFlag_render;
 
@@ -242,7 +225,7 @@ int main() {
     }
     {
         Entity* e = registerEntity();
-        e->texture = makeTexture("res/textures/brick.png", &globs.levelArena);
+        e->texture = makeTexture("res/textures/brick.png", 4, &engGlobs.levelArena);
         e->flags |= entityFlag_render;
         e->position = V2f(-10, 0);
         float height = 1;
@@ -286,11 +269,19 @@ int main() {
 
     U32 sceneShader = registerShader("res/shaders/2d.vert", "res/shaders/2d.frag");
     U32 solidShader = registerShader("res/shaders/solid.vert", "res/shaders/solid.frag");
+    U32 blueShader = registerShader("res/shaders/blue.vert", "res/shaders/blue.frag");
 
-    BumpAlloc renderCallArena;
-    bump_allocate(&renderCallArena, sizeof(UniBlock) * 256);
-    BumpAlloc debugCallArena;
-    bump_allocate(&debugCallArena, sizeof(UniBlock) * 256);
+    UniBlock* firstRenderCall = nullptr;
+    UniBlock* firstDebugCall = nullptr;
+    UniBlock* firstBlueCall = nullptr;
+
+
+
+    Texture* solidTex = makeTexture("res/textures/solid.png", 4, &engGlobs.levelArena);
+    blu_init(solidTex);
+    Texture* font = nullptr;
+    blu_loadFont("C:/windows/fonts/consola.ttf", &engGlobs.levelArena, &font);
+
 
 
     bool debugDrawEnabled = true;
@@ -298,26 +289,56 @@ int main() {
     F64 acc = 0;
     F64 prevTime = glfwGetTime();
     while(!glfwWindowShouldClose(window)) {
+        blu_beginFrame();
 
         {
-            Input* inp = &globs.inputs[INPUT_DEBUG_DRAW_TOGGLE];
+            Input* inp = &engGlobs.inputs[INPUT_DEBUG_DRAW_TOGGLE];
             if(inp->val && !inp->prev){
                 debugDrawEnabled = !debugDrawEnabled;
             }
         }
 
-        globs.time = glfwGetTime();
-        globs.dt = globs.time - prevTime;
-        prevTime = globs.time;
+        {
+            blu_styleScope(blu_Style()) {
+                blu_style_sizeX({ blu_sizeKind_PERCENT, 1 });
+                blu_style_sizeY({ blu_sizeKind_TEXT, 1 });
+                blu_style_backgroundColor({ 0.5, 0.5, 0.5, 0.5 });
+                blu_style_textColor({1, 1, 1, 1});
+                blu_style_textPadding({2, 2});
+                blu_style_childLayoutAxis(blu_axis_Y);
+
+                blu_Area* a = blu_areaMake("debug panel", 0);
+                a->style.sizes[blu_axis_X] = { blu_sizeKind_PX, 300 };
+                a->style.sizes[blu_axis_Y] = { blu_sizeKind_CHILDSUM, 0 };
+
+                blu_parentScope(a) {
+                    a = blu_areaMake("debug draw??", blu_areaFlags_DRAW_TEXT | blu_areaFlags_DRAW_BACKGROUND | blu_areaFlags_HOVER_ANIM | blu_areaFlags_CLICKABLE);
+                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, {.8, .8, .8, 1}, a->target_hoverAnim);
+                    str s = str_format(&engGlobs.frameArena, STR("Debug draw: %b"), debugDrawEnabled);
+                    blu_areaAddDisplayStr(a, s);
+
+                    a = blu_areaMake("text", blu_areaFlags_DRAW_TEXT | blu_areaFlags_DRAW_BACKGROUND | blu_areaFlags_HOVER_ANIM | blu_areaFlags_CLICKABLE);
+                    a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, V4f{.8, .8, .8, 1}, a->target_hoverAnim);
+                    blu_areaAddDisplayStr(a, "Hello world!");
+                }
+            }
+        }
+
+        engGlobs.time = glfwGetTime();
+        engGlobs.dt = engGlobs.time - prevTime;
+        prevTime = engGlobs.time;
 
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
-
+        F64 mx, my;
+        glfwGetCursorPos(window, &mx, &my);
+        bool leftPressed = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)? true : false;
+        bool rightPressed = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)? true : false;
 
         // UPDATE INPUTS
         {
-            for(int i = 0; i < sizeof(globs.inputs) / sizeof(Input); i++) {
-                Input* input = &globs.inputs[i];
+            for(int i = 0; i < sizeof(engGlobs.inputs) / sizeof(Input); i++) {
+                Input* input = &engGlobs.inputs[i];
                 input->prev = input->val;
 
                 input->val = 0;
@@ -332,16 +353,16 @@ int main() {
 
         // TICK UPDATES
         {
-            acc += globs.dt;
+            acc += engGlobs.dt;
             if(acc > 0.2) { acc = 0.2; }
             while(acc > PHYSICS_DT) {
                 acc -= PHYSICS_DT;
 
 
-                Entity** physicsList = BUMP_PUSH_ARR(&globs.frameArena, globs.entityCount*globs.entityCount, Entity*);
+                Entity** physicsList = BUMP_PUSH_ARR(&engGlobs.frameArena, engGlobs.entityCount*engGlobs.entityCount, Entity*);
                 U32 physicsCount = 0;
 
-                Entity* e = globs.firstEntity;
+                Entity* e = engGlobs.firstEntity;
                 while(e) {
                     if(e->flags & entityFlag_collision) {
                         ARR_APPEND(physicsList, physicsCount, e);
@@ -353,7 +374,7 @@ int main() {
                     Entity* a;
                     Entity* b;
                 } Pair;
-                Pair* pairs = BUMP_PUSH_ARR(&globs.frameArena, physicsCount*physicsCount, Pair);
+                Pair* pairs = BUMP_PUSH_ARR(&engGlobs.frameArena, physicsCount*physicsCount, Pair);
                 U32 pairCount = 0;
 
                 for(int i = 0; i < physicsCount; i++) {
@@ -384,7 +405,7 @@ int main() {
                 }
 
                 // TICKS
-                e = globs.firstEntity;
+                e = engGlobs.firstEntity;
                 while(e) {
                     if(e->tickFunc) {
                         e->tickFunc(e);
@@ -396,13 +417,14 @@ int main() {
         } // end section
 
         // FRAME UPDATES AND CALL CREATION
-        bump_clear(&renderCallArena);
-        bump_clear(&debugCallArena);
+        firstRenderCall = nullptr;
+        firstDebugCall = nullptr;
+        firstBlueCall = nullptr;
 
-        Entity* e = globs.firstEntity;
+        Entity* e = engGlobs.firstEntity;
         while(e) {
             if(e->flags & entityFlag_animation) {
-                e->animAcc += globs.dt;
+                e->animAcc += engGlobs.dt;
 
                 if(e->animAcc > e->animFPS) {
                     e->animAcc -= e->animFPS;
@@ -421,7 +443,8 @@ int main() {
                 e->frameFunc(e);
             }
             if(e->flags & entityFlag_render) {
-                UniBlock* b = BUMP_PUSH_NEW(&renderCallArena, UniBlock);
+                UniBlock* b = registerCall(&firstRenderCall, &engGlobs.frameArena);
+
                 float aspect = 1;
                 if(e->texture) {
                     b->textureId = e->texture->id;
@@ -442,7 +465,7 @@ int main() {
             }
             if(debugDrawEnabled) {
                 if(e->flags & entityFlag_collision) {
-                    UniBlock* b = BUMP_PUSH_NEW(&debugCallArena, UniBlock);
+                    UniBlock* b = registerCall(&firstDebugCall, &engGlobs.frameArena);
                     b->color = V4f(0, 1, 0, 1);
                     b->model = matrixTransform(
                         e->position.x, e->position.y,
@@ -455,6 +478,10 @@ int main() {
         }
 
         // DRAW RENDER CALLS
+        blu_layout(V2f(w, h));
+        blu_Cursor c, frame;
+        blu_input(V2f((F32)mx, (F32)my), leftPressed, rightPressed, windowScrollDelta, &c);
+
         {
             Mat4f view = Mat4f(1.0f);
             Mat4f temp = Mat4f(1.0f);
@@ -468,8 +495,9 @@ int main() {
 
             glViewport(0, 0, w, h);
 
-            glClearColor(1, 1, 1, 1);
+            glClearColor(0.1, 0.1, 0.1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
             // scene objects
             {
@@ -479,9 +507,8 @@ int main() {
                 int loc = glGetUniformLocation(sceneShader, "uVP");
                 glUniformMatrix4fv(loc, 1, false, &vp[0]);
 
-                int len = (UniBlock*)renderCallArena.end - (UniBlock*)renderCallArena.start;
-                for(int i = 0; i < len; i++) {
-                    UniBlock* b = &((UniBlock*)renderCallArena.start)[i];
+                UniBlock* b = firstRenderCall;
+                while(b) {
                     loc = glGetUniformLocation(sceneShader, "uTexture");
                     glUniform1i(loc, 0);
                     glActiveTexture(GL_TEXTURE0 + 0);
@@ -494,6 +521,7 @@ int main() {
                     glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
 
                     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                    b = b->next;
                 }
             }
 
@@ -507,21 +535,74 @@ int main() {
                 int loc = glGetUniformLocation(solidShader, "uVP");
                 glUniformMatrix4fv(loc, 1, false, &vp[0]);
 
-                int len = (UniBlock*)debugCallArena.end - (UniBlock*)debugCallArena.start;
-                for(int i = 0; i < len; i++) {
-                    UniBlock* b = &((UniBlock*)debugCallArena.start)[i];
-
+                UniBlock* b = firstDebugCall;
+                while(b) {
                     loc = glGetUniformLocation(solidShader, "uColor");
                     glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
-
                     loc = glGetUniformLocation(solidShader, "uModel");
                     glUniformMatrix4fv(loc, 1, false, &b->model[0]);
                     glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_INT, nullptr);
+                    b = b->next;
                 }
+            }
+
+            // UI
+            {
+                Mat4f vp;
+                matrixOrtho(0, w, h, 0, 0.0001, 10000, vp);
+                blu_makeDrawCalls(&firstBlueCall);
+
+                glUseProgram(blueShader);
+                glBindVertexArray(va);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+
+                int loc = glGetUniformLocation(blueShader, "uVP");
+                glUniformMatrix4fv(loc, 1, false, &vp[0]);
+
+                glDepthFunc(GL_LESS);
+                UniBlock* b = firstBlueCall;
+                while(b) {
+                    loc = glGetUniformLocation(blueShader, "uBorderColor");
+                    glUniform4f(loc, b->borderColor.x, b->borderColor.y, b->borderColor.z, b->borderColor.w);
+                    loc = glGetUniformLocation(blueShader, "uBorderSize");
+                    glUniform1f(loc, b->borderSize);
+                    loc = glGetUniformLocation(blueShader, "uCornerRadius");
+                    glUniform1f(loc, b->cornerRadius);
+
+                    loc = glGetUniformLocation(blueShader, "uDstStart");
+                    glUniform2f(loc, b->dstStart.x, b->dstStart.y);
+                    loc = glGetUniformLocation(blueShader, "uDstEnd");
+                    glUniform2f(loc, b->dstEnd.x, b->dstEnd.y);
+                    loc = glGetUniformLocation(blueShader, "uSrcStart");
+                    glUniform2f(loc, b->srcStart.x, b->srcStart.y);
+                    loc = glGetUniformLocation(blueShader, "uSrcEnd");
+                    glUniform2f(loc, b->srcEnd.x, b->srcEnd.y);
+                    loc = glGetUniformLocation(blueShader, "uClipStart");
+                    glUniform2f(loc, b->clipStart.x, b->clipStart.y);
+                    loc = glGetUniformLocation(blueShader, "uClipEnd");
+                    glUniform2f(loc, b->clipEnd.x, b->clipEnd.y);
+
+                    loc = glGetUniformLocation(blueShader, "uColor");
+                    glUniform4f(loc, b->color.x, b->color.y, b->color.z, b->color.w);
+
+                    loc = glGetUniformLocation(blueShader, "uTexture");
+                    glUniform1i(loc, 0);
+                    glActiveTexture(GL_TEXTURE0 + 0);
+                    glBindTexture(GL_TEXTURE_2D, b->textureId);
+
+                    loc = glGetUniformLocation(blueShader, "uFontTexture");
+                    glUniform1i(loc, 1);
+                    glActiveTexture(GL_TEXTURE0 + 1);
+                    glBindTexture(GL_TEXTURE_2D, b->fontTextureId);
+
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                    b = b->next;
+                }
+                glDepthFunc(GL_LESS | GL_EQUAL);
             }
         }
 
-        bump_clear(&globs.frameArena);
+        bump_clear(&engGlobs.frameArena);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

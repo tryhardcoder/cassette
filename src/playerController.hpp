@@ -25,7 +25,7 @@ void s_playerTick(Entity* e) {
     PlayerState* p = &e->playerState;
 
     if(p->ctrlState == ps_controllable || p->ctrlState == ps_punching || p->ctrlState == ps_hurt) {
-        float velTarget = globs.inputs[INPUT_MOVEX].val * maxVelocity;
+        float velTarget = engGlobs.inputs[INPUT_MOVEX].val * maxVelocity;
         e->velocity.x = lerp(e->velocity.x, velTarget, velocitySnap);
 
         if(p->jumpBuffered && p->grounded) {
@@ -51,21 +51,21 @@ void s_playerTick(Entity* e) {
 void s_playerFrame(Entity* e) {
     PlayerState* p = &e->playerState;
 
-    if(globs.time - p->jumpBufferTime > 0.1) {
+    if(engGlobs.time - p->jumpBufferTime > 0.1) {
         p->jumpBuffered = false;
     }
 
-    Input* i = &globs.inputs[INPUT_JUMP];
+    Input* i = &engGlobs.inputs[INPUT_JUMP];
     if(i->val) {
         p->jumpBuffered = i? true : false;
-        p->jumpBufferTime = globs.time;
+        p->jumpBufferTime = engGlobs.time;
     }
 
     if(p->ctrlState == ps_controllable || p->ctrlState == ps_hurt) {
-        if(globs.inputs[INPUT_MOVEX].val < 0) {
+        if(engGlobs.inputs[INPUT_MOVEX].val < 0) {
             p->facingRight = false;
         }
-        if(globs.inputs[INPUT_MOVEX].val > 0) {
+        if(engGlobs.inputs[INPUT_MOVEX].val > 0) {
             p->facingRight = true;
         }
         if(p->facingRight) {
@@ -79,13 +79,13 @@ void s_playerFrame(Entity* e) {
         Animation* prevAnim = e->animation;
 
         if(p->ctrlState == ps_controllable) {
-            if(globs.inputs[INPUT_PUNCH].val) {
+            if(engGlobs.inputs[INPUT_PUNCH].val) {
                 e->animation = &punch;
                 p->ctrlState = ps_punching;
-            } else if(globs.inputs[INPUT_ROLL].val) {
+            } else if(engGlobs.inputs[INPUT_ROLL].val) {
                 e->animation = &roll;
                 p->ctrlState = ps_rolling;
-            } else if(globs.inputs[INPUT_MOVEX].val != 0) {
+            } else if(engGlobs.inputs[INPUT_MOVEX].val != 0) {
                 e->animation = &run;
                 p->ctrlState = ps_controllable;
             } else {
