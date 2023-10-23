@@ -285,6 +285,7 @@ int main() {
 
 
     bool debugDrawEnabled = true;
+    bool paused = false;
 
     F64 acc = 0;
     F64 prevTime = glfwGetTime();
@@ -300,13 +301,15 @@ int main() {
 
         {
             blu_styleScope(blu_Style()) {
+                blu_Area* a = nullptr;
                 blu_style_sizeX({ blu_sizeKind_PERCENT, 1 });
-                blu_style_sizeY({ blu_sizeKind_TEXT, 1 });
-                blu_style_backgroundColor({ 0.5, 0.5, 0.5, 0.5 });
+                blu_style_sizeY({ blu_sizeKind_PERCENT, 1 });
+                blu_style_backgroundColor({ 0.25, 0.25, 0.25, 0.75 });
                 blu_style_textColor({1, 1, 1, 1});
                 blu_style_textPadding({2, 2});
                 blu_style_childLayoutAxis(blu_axis_Y);
 
+                /*
                 blu_Area* a = blu_areaMake("debug panel", 0);
                 a->style.sizes[blu_axis_X] = { blu_sizeKind_PX, 300 };
                 a->style.sizes[blu_axis_Y] = { blu_sizeKind_CHILDSUM, 0 };
@@ -320,6 +323,28 @@ int main() {
                     a = blu_areaMake("text", blu_areaFlags_DRAW_TEXT | blu_areaFlags_DRAW_BACKGROUND | blu_areaFlags_HOVER_ANIM | blu_areaFlags_CLICKABLE);
                     a->style.backgroundColor = v4f_lerp({.5, .5, .5, .5}, V4f{.8, .8, .8, 1}, a->target_hoverAnim);
                     blu_areaAddDisplayStr(a, "Hello world!");
+                }
+                */
+                Input* in = &engGlobs.inputs[INPUT_PAUSE_TOGGLE];
+                if(in->val && !in->prev) {
+                    paused = !paused;
+                }
+
+                if(paused) {
+                    a = blu_areaMake("back", blu_areaFlags_DRAW_BACKGROUND);
+                    a->style.childLayoutAxis = blu_axis_Y;
+                    blu_parentScope(a) {
+                        a = blu_areaMake("topspacer", 0);
+                        a->style.sizes[blu_axis_Y].kind = blu_sizeKind_REMAINDER;
+
+                        a = blu_areaMake("text", blu_sizeKind_TEXT | blu_areaFlags_CENTER_TEXT);
+                        blu_areaAddDisplayStr(a, "PAUSED");
+                        a->textScale = 3;
+                        a->style.sizes[blu_axis_Y] = { blu_sizeKind_TEXT, 0 };
+
+                        a = blu_areaMake("bottomspacer", 0);
+                        a->style.sizes[blu_axis_Y].kind = blu_sizeKind_REMAINDER;
+                    }
                 }
             }
         }

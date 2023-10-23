@@ -23,7 +23,8 @@ CHECKLIST:
     ART:
         [X] demo level background
         [ ] Boss
-            [ ] base design
+            [ ] model
+            [ ] rig
             [ ] walk
             [ ] attack
             [ ] death

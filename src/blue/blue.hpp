@@ -281,7 +281,7 @@ blu_WidgetInteraction blu_interactionFromWidget(blu_Area* area);
 #define blu_parentScope(parent) blu_deferLoop(blu_pushParent(parent), blu_popParent())
 
 
-#define BLU_FONT_SIZE 15 // in px
+#define BLU_FONT_SIZE 35 // in px
 
 #ifdef BLU_IMPL
 
