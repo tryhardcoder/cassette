@@ -89,6 +89,11 @@ CHECKLIST:
     Build system:
         project is built using simple batchfiles and gcc to compile and link
 
+Before:
+    Leared basic controls ()
+    made a model
+    added clothing, technique from here: https://www.youtube.com/watch?v=_StljmlDmEQ&ab_channel=SouthernShotty
+    did basic rigging, learned from here: https://www.youtube.com/watch?v=DDeB4tDVCGY&t=295s&ab_channel=JoeyCarlino
 
 9/23 / 9/24
     Started on character modeling in blender. Learned about basic controls to drag on axis. Did basic rigging and animation for the player.
