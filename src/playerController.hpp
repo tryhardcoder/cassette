@@ -49,6 +49,8 @@ void s_playerTick(Entity* e) {
 
 #define FRAME_COUNT 25
 void s_playerFrame(Entity* e) {
+    if(engGlobs.paused) { return; }
+
     PlayerState* p = &e->playerState;
 
     if(engGlobs.time - p->jumpBufferTime > 0.1) {

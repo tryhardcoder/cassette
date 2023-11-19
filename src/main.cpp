@@ -285,7 +285,6 @@ int main() {
 
 
     bool debugDrawEnabled = true;
-    bool paused = false;
 
     F64 acc = 0;
     F64 prevTime = glfwGetTime();
@@ -327,10 +326,10 @@ int main() {
                 */
                 Input* in = &engGlobs.inputs[INPUT_PAUSE_TOGGLE];
                 if(in->val && !in->prev) {
-                    paused = !paused;
+                    engGlobs.paused = !engGlobs.paused;
                 }
 
-                if(paused) {
+                if(engGlobs.paused) {
                     a = blu_areaMake("back", blu_areaFlags_DRAW_BACKGROUND);
                     a->style.childLayoutAxis = blu_axis_Y;
                     blu_parentScope(a) {
@@ -376,70 +375,73 @@ int main() {
             }
         }
 
-        // TICK UPDATES
-        {
-            acc += engGlobs.dt;
-            if(acc > 0.2) { acc = 0.2; }
-            while(acc > PHYSICS_DT) {
-                acc -= PHYSICS_DT;
+        if(!engGlobs.paused) {
+
+            // TICK UPDATES
+            {
+                acc += engGlobs.dt;
+                if(acc > 0.2) { acc = 0.2; }
+                while(acc > PHYSICS_DT) {
+                    acc -= PHYSICS_DT;
 
 
-                Entity** physicsList = BUMP_PUSH_ARR(&engGlobs.frameArena, engGlobs.entityCount*engGlobs.entityCount, Entity*);
-                U32 physicsCount = 0;
+                    Entity** physicsList = BUMP_PUSH_ARR(&engGlobs.frameArena, engGlobs.entityCount*engGlobs.entityCount, Entity*);
+                    U32 physicsCount = 0;
 
-                Entity* e = engGlobs.firstEntity;
-                while(e) {
-                    if(e->flags & entityFlag_collision) {
-                        ARR_APPEND(physicsList, physicsCount, e);
+                    Entity* e = engGlobs.firstEntity;
+                    while(e) {
+                        if(e->flags & entityFlag_collision) {
+                            ARR_APPEND(physicsList, physicsCount, e);
+                        }
+                        e = e->next;
                     }
-                    e = e->next;
-                }
 
-                typedef struct {
-                    Entity* a;
-                    Entity* b;
-                } Pair;
-                Pair* pairs = BUMP_PUSH_ARR(&engGlobs.frameArena, physicsCount*physicsCount, Pair);
-                U32 pairCount = 0;
+                    typedef struct {
+                        Entity* a;
+                        Entity* b;
+                    } Pair;
+                    Pair* pairs = BUMP_PUSH_ARR(&engGlobs.frameArena, physicsCount*physicsCount, Pair);
+                    U32 pairCount = 0;
 
-                for(int i = 0; i < physicsCount; i++) {
-                    Entity* a = physicsList[i];
-                    for(int j = i+1; j < physicsCount; j++) {
-                        Entity* b = physicsList[j];
-                        if(a->mask & b->layer || b->mask & a->layer) {
-                            ARR_APPEND(pairs, pairCount, (Pair{a, b}));
+                    for(int i = 0; i < physicsCount; i++) {
+                        Entity* a = physicsList[i];
+                        for(int j = i+1; j < physicsCount; j++) {
+                            Entity* b = physicsList[j];
+                            if(a->mask & b->layer || b->mask & a->layer) {
+                                ARR_APPEND(pairs, pairCount, (Pair{a, b}));
+                            }
                         }
                     }
-                }
 
-                for(int i = 0; i < pairCount; i++) {
-                    Pair p = pairs[i];
-                    p_Manifold m;
-                    if(p_AABB_intersect(
-                        p.a->colliderHalfSize, p.b->colliderHalfSize,
-                        p.a->position, p.b->position,
-                        &m)) {
-                        if(p.a->collideFunc) {
-                            p.a->collideFunc(m, p.a, p.b);
-                        }
-                        if(p.b->collideFunc) {
-                            m.normal *= -1;
-                            p.b->collideFunc(m, p.b, p.a);
+                    for(int i = 0; i < pairCount; i++) {
+                        Pair p = pairs[i];
+                        p_Manifold m;
+                        if(p_AABB_intersect(
+                            p.a->colliderHalfSize, p.b->colliderHalfSize,
+                            p.a->position, p.b->position,
+                            &m)) {
+                            if(p.a->collideFunc) {
+                                p.a->collideFunc(m, p.a, p.b);
+                            }
+                            if(p.b->collideFunc) {
+                                m.normal *= -1;
+                                p.b->collideFunc(m, p.b, p.a);
+                            }
                         }
                     }
-                }
 
-                // TICKS
-                e = engGlobs.firstEntity;
-                while(e) {
-                    if(e->tickFunc) {
-                        e->tickFunc(e);
+                    // TICKS
+                    e = engGlobs.firstEntity;
+                    while(e) {
+                        if(e->tickFunc) {
+                            e->tickFunc(e);
+                        }
+                        e = e->next;
                     }
-                    e = e->next;
-                }
 
-            } // end acc loop
-        } // end section
+                } // end acc loop
+            } // end section
+        }
 
         // FRAME UPDATES AND CALL CREATION
         firstRenderCall = nullptr;
@@ -449,20 +451,22 @@ int main() {
         Entity* e = engGlobs.firstEntity;
         while(e) {
             if(e->flags & entityFlag_animation) {
-                e->animAcc += engGlobs.dt;
+                if(!engGlobs.paused) {
+                    e->animAcc += engGlobs.dt;
 
-                if(e->animAcc > e->animFPS) {
-                    e->animAcc -= e->animFPS;
-                    e->animFrame++;
-                    if(e->animFrame >= e->animation->frameCount) {
-                        e->animFrame = e->animFrame % e->animation->frameCount;
+                    if(e->animAcc > e->animFPS) {
+                        e->animAcc -= e->animFPS;
+                        e->animFrame++;
+                        if(e->animFrame >= e->animation->frameCount) {
+                            e->animFrame = e->animFrame % e->animation->frameCount;
+                        }
                     }
-                }
 
-                float offset = 1.0 / e->animation->frameCount;
-                e->texture = e->animation->tex;
-                e->textureStart = { e->animFrame * offset, 0 };
-                e->textureEnd = { (e->animFrame+1) * offset, 1 };
+                    float offset = 1.0 / e->animation->frameCount;
+                    e->texture = e->animation->tex;
+                    e->textureStart = { e->animFrame * offset, 0 };
+                    e->textureEnd = { (e->animFrame+1) * offset, 1 };
+                }
             }
             if(e->frameFunc) {
                 e->frameFunc(e);

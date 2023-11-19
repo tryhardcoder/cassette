@@ -148,6 +148,7 @@ struct eng_Globs {
 
     float dt = 0;
     float time = 0;
+    bool paused = 0;
 };
 
 extern eng_Globs engGlobs;
