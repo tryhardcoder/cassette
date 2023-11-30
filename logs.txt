@@ -8,14 +8,14 @@ CHECKLIST:
         [X] textured quad renderer
         [X] simple physics
         [X] animation system
-        [ ] player controller
+        [X] player controller
         [X] hit system for dummy
         [X] player hurt system
         [ ] boss AI
         [ ] health bars
         [ ] respawn system
         [X] UI system
-        [ ] pause menu
+        [X] pause menu
         [ ] main menu
         [ ] particle system
         [ ] sfx and music system
@@ -35,7 +35,7 @@ CHECKLIST:
             [X] walk
             [X] attack
             [X] roll
-            [ ] hurt
+            [X] hurt
             [ ] death
 
     EXTRA CREDIT:
